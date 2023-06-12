@@ -1,15 +1,7 @@
 #include "Servidor.h"
 
 void Servidor::Countdown() {
-	std::function<void()> doThing = [&]() { Ping(&con, &socket); };
-	//timer.start(std::chrono::milliseconds(1000), [doThing] {
-	//	std::puts("Hola!");
-	//	});
-	//std::cout << ping << std::endl;
 	
-	timer.stop(doThing);
-	//ping = true;
-	//std::cout << ping << std::endl;
 }
 
 void Servidor::Ping(newConnection* con, sf::UdpSocket* sock) {

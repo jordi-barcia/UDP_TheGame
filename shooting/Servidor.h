@@ -24,11 +24,12 @@ class Servidor
 		std::string solution; // Respuesta al challenge
 	};
 	std::string action, content;
-	int countdownSeconds = 10000;
+	int countdownSeconds = 30;
 	GameRun g;
 	GameConnections gc;
 	std::vector<GameRun>games;
 	Timer timer;
+	std::vector<Timer> timers;
 	bool ping = false;
 	sf::UdpSocket socket;
 	newConnection con;

@@ -1,45 +1,32 @@
 #pragma once
-#include <thread>
-#include <chrono>
-#include <functional>
-#include <cstdio>
-#include <atomic>
+#include <time.h>
 class Timer
 {
 public:
-    ~Timer() {
-        //if (mRunning) {
-        //    stop(const Timeout& timeout);
-        //}
-    }
-    typedef std::chrono::milliseconds Interval;
-    typedef std::function<void(void)> Timeout;
+    Timer() {}
+    ~Timer() {}
 
-    void start(const Interval& interval, const Timeout& timeout) {
-        mRunning = true;
+    void init(time_t temp_duration) {
 
-        mThread = std::thread([this, interval, timeout] {
-            while (mRunning) {
-                std::this_thread::sleep_for(interval);
-
-                timeout();
-            }
-            });
-    }
-    void stop(const Timeout& timeout) {
-        mRunning = true;
-        mThread = std::thread([this, timeout] {
-            while (mRunning) {
-                std::this_thread::sleep_for(std::chrono::seconds(10));
-                timeout();
-                mRunning = false;
-                mThread.join();
-            }
-            });
+        initial_time = time(NULL);
+        temp = temp_duration;
+        deltaTime = time(NULL);
+        lastTime = initial_time;
     }
 
+    void update() {
+        //Sacamos la diferencia de tiempo desde la ultima iteracion y la actual
+        deltaTime = time(NULL) - lastTime;
+        //Actualizamos el tiempo restante
+        temp -= deltaTime;
+        //Almacenamos el tiempo de la iteracion actual
+        lastTime += deltaTime;
+    }
+
+    time_t temp;
 private:
-    std::thread mThread{};
-    std::atomic_bool mRunning{};
+    time_t deltaTime;
+    time_t lastTime;
+    time_t initial_time;
 };
 
