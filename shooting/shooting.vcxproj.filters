@@ -30,9 +30,6 @@
     <ClCompile Include="Servidor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Partida.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Cliente.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -54,9 +51,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Servidor.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Partida.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Cliente.h">

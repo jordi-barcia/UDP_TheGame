@@ -143,6 +143,7 @@ void Cliente::CreateGame()
 	//Generar distintos threads para cada partida
 	game.host = "a";
 	game.guest = "b";
+	game.window = gc.window;
 	std::thread run_game(&GameRun::updateGame, &game);
 	run_game.detach();
 }

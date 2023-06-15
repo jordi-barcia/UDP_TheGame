@@ -161,7 +161,6 @@
     <ClCompile Include="GameRun.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="game.cpp" />
-    <ClCompile Include="Partida.cpp" />
     <ClCompile Include="Servidor.cpp" />
     <ClCompile Include="utils.cpp" />
   </ItemGroup>
@@ -171,7 +170,6 @@
     <ClInclude Include="game.h" />
     <ClInclude Include="GameConnections.h" />
     <ClInclude Include="GameRun.h" />
-    <ClInclude Include="Partida.h" />
     <ClInclude Include="Servidor.h" />
     <ClInclude Include="Timer.h" />
     <ClInclude Include="utils.h" />

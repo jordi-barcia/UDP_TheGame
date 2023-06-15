@@ -12,7 +12,6 @@
 class GameRun
 {
 	// GUI VARIABLES
-	sf::RenderWindow window;
 	sf::Texture characterTex;
 	sf::Texture bg;
 	sf::Sprite sprite;
@@ -28,8 +27,10 @@ class GameRun
 	std::vector<Bullet> bullets2; // Bullet container to manage them
 
 public:
+	sf::RenderWindow window;
 	std::string host = "a";
 	std::string guest = "a";
 	void updateGame();
+	void setupGame();
 };
 
