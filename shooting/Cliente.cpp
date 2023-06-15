@@ -74,7 +74,7 @@ void Cliente::ClientMain()
 
 
 	gc.ClientSetup();
-	while (gc.window.isOpen()) {
+	while (true) {
 		if (!gc.pingPong && gc.chooseGame) {
 			HelloClient(&socket, &inPacket);
 			// Logic for receiving
@@ -142,9 +142,7 @@ void Cliente::GameSelected(sf::UdpSocket* sock)
 void Cliente::CreateGame()
 {
 	//Generar distintos threads para cada partida
-	game.host = "a";
-	game.guest = "b";
-	gc.window.close();
+	//gc.window.close();
 	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 	std::thread run_game(&GameRun::updateGame, &game);
 	run_game.detach();
