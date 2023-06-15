@@ -6,6 +6,7 @@ Cliente::Cliente()
 	this->port = 5000;
 	this->name = gc.name;
 }
+
 void Cliente::Pong() {
 	std::cout << "PING RECIBIDO" << std::endl;
 }
@@ -143,7 +144,8 @@ void Cliente::CreateGame()
 	//Generar distintos threads para cada partida
 	game.host = "a";
 	game.guest = "b";
-	game.window = gc.window;
+	gc.window.close();
+	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 	std::thread run_game(&GameRun::updateGame, &game);
 	run_game.detach();
 }

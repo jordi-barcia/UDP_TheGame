@@ -2,21 +2,21 @@
 
 void GameRun::updateGame()
 {
-
+	setupGame();
 	// App loop
-	while (window.isOpen())
+	while (windowGame.isOpen())
 	{
-		while (window.pollEvent(event))
+		while (windowGame.pollEvent(event))
 		{
 			switch (event.type)
 			{
 			case sf::Event::Closed:
-				window.close(); // Close windows if X is pressed 
+				windowGame.close(); // Close windowGames if X is pressed 
 				break;
 			case sf::Event::KeyPressed:
 
 				if (event.key.code == sf::Keyboard::Escape)
-					window.close(); // Close windows if ESC is pressed 
+					windowGame.close(); // Close windowGames if ESC is pressed 
 				// Manage events when playing
 					// Checking Movement
 				cDir.x = 0;
@@ -52,12 +52,12 @@ void GameRun::updateGame()
 
 				break;
 
-				window.clear();
-				window.draw(sprite);
+				windowGame.clear();
+				windowGame.draw(sprite);
 
 				// When playing
-				window.draw(character.GetSprite());
-				window.draw(character2.GetSprite());
+				windowGame.draw(character.GetSprite());
+				windowGame.draw(character2.GetSprite());
 
 				// Bullets update
 
@@ -74,22 +74,20 @@ void GameRun::updateGame()
 						continue;
 					}
 					(*it2).Move();
-					window.draw((*it2).GetShape());
+					windowGame.draw((*it2).GetShape());
 					it2++;
 				}
-
-
-				std::this_thread::sleep_for(std::chrono::milliseconds(10));
-				window.display();
 			}
 		}
+		std::this_thread::sleep_for(std::chrono::milliseconds(10));
+		windowGame.display();
 	}
 }
 
 void GameRun::setupGame() 
 {
-	// Windows initialization
-	window.create(sf::VideoMode(850, 600), "Game");
+	// windowGames initialization
+	windowGame.create(sf::VideoMode(850, 600), "Partida");
 
 	if (!font.loadFromFile("resources/fonts/courbd.ttf"))
 	{
@@ -98,8 +96,4 @@ void GameRun::setupGame()
 
 	bg.loadFromFile("resources/bg.png");
 	sprite.setTexture(bg);
-
-	nameRectangle = sf::RectangleShape(sf::Vector2f(400, 30));
-	nameRectangle.setFillColor(sf::Color(255, 255, 255, 150));
-	nameRectangle.setPosition(200, 130);
 }

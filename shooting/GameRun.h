@@ -15,9 +15,13 @@ class GameRun
 	sf::Texture characterTex;
 	sf::Texture bg;
 	sf::Sprite sprite;
+	sf::String message;
+	sf::Text text;
+	sf::Text nameText;
+	sf::Font font;
 	sf::Event event;
+	sf::RectangleShape nameRectangle;
 	sf::String input;
-
 
 	// GAME VARIABLES
 	sf::Vector2f cDir;
@@ -27,7 +31,7 @@ class GameRun
 	std::vector<Bullet> bullets2; // Bullet container to manage them
 
 public:
-	sf::RenderWindow window;
+	sf::RenderWindow windowGame;
 	std::string host = "a";
 	std::string guest = "a";
 	void updateGame();
