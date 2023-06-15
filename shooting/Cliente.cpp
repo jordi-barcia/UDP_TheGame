@@ -44,6 +44,13 @@ void Cliente::HelloClient(sf::UdpSocket* sock, sf::Packet* inPacket)
 	sf::sleep(t1);
 }
 
+void Cliente::SendPacket(sf::UdpSocket* sock, std::string actionMssg, std::string contentMssg)
+{
+	sf::Packet outPacket;
+	outPacket << actionMssg << contentMssg;
+	sock->send(outPacket, "127.0.0.1", 5000);
+}
+
 void Cliente::ClientMain()
 {
 	// Aplication init
@@ -117,15 +124,31 @@ void Cliente::GameSelected(sf::UdpSocket* sock)
 	//SEND
 	if (gc.created) {
 		content = gc.created;
-		outPacket << "CREATED" << content;
-		sock->send(outPacket, "127.0.0.1", 5000); 
+		/*outPacket << "CREATE" << content;
+		sock->send(outPacket, "127.0.0.1", 5000); */
+		SendPacket(sock, "CREATE", content);
+		CreateGame();
 	}
 	else if (gc.joined) {
 		content = gc.joined;
-		outPacket << "JOINED" << content;
-		sock->send(outPacket, "127.0.0.1", 5000);
+		/*outPacket << "JOINED" << content;
+		sock->send(outPacket, "127.0.0.1", 5000);*/
+		SendPacket(sock, "JOINED", content);
 	}
 	sf::sleep(t1);
 }
 
+void Cliente::CreateGame()
+{
+	//Generar distintos threads para cada partida
+	game.host = "a";
+	game.guest = "b";
+	std::thread run_game(&GameRun::updateGame, &game);
+	run_game.detach();
+}
+
+void Cliente::JoinGame(std::vector<GameRun> games)
+{
+	//Generar terreno del mapa
+}
 

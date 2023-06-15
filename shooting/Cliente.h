@@ -11,6 +11,7 @@
 #include <SFML/System/Vector2.hpp>
 #include "GameConnections.h"
 #include "Timer.h"
+#include "GameRun.h"
 
 class Cliente
 {
@@ -19,6 +20,8 @@ class Cliente
 	sf::Time t1 = sf::seconds(1.0f);
 	Timer timer;
 	bool check = false;
+	GameRun game;
+
 public:
 	Cliente();
 	GameConnections gc;
@@ -27,11 +30,13 @@ public:
 	unsigned short port = 5000;
 	int clientID = -1;
 
-
 	void HelloClient(sf::UdpSocket* sock, sf::Packet* inPacket);
+	void SendPacket(sf::UdpSocket* sock, std::string actionMssg, std::string contentMssg);
 	void ClientMain();
 	void GameSelected(sf::UdpSocket* sock);
 	void Pong();
 	void Check();
+	void CreateGame();
+	void JoinGame(std::vector<GameRun> games);
 };
 

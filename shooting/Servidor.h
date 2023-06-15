@@ -8,7 +8,6 @@
 #include "entities.h"
 #include "Cliente.h"
 #include "GameConnections.h"
-#include "GameRun.h"
 #include "Timer.h"
 #include <functional>
 
@@ -25,7 +24,6 @@ class Servidor
 	};
 	std::string action, content;
 	int countdownSeconds = 30;
-	GameRun g;
 	GameConnections gc;
 	std::vector<GameRun>games;
 	Timer timer;
@@ -37,11 +35,9 @@ class Servidor
 	
 public:
 	std::vector<newConnection> clients;
+
 	void Hello(newConnection* con, sf::UdpSocket* sock, sf::Packet* inPacket);
 	void StartServer();
-	void JoinGame(std::vector<GameRun>games, newConnection client);
-	void CreateGame(std::vector<GameRun>games, newConnection client);
-	void runGame(std::vector<GameRun> listOfGames);
 	void Countdown();
 	void Ping(newConnection* con, sf::UdpSocket* sock);
 };

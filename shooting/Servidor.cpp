@@ -29,6 +29,9 @@ void Servidor::Hello(newConnection* con, sf::UdpSocket* sock, sf::Packet* inPack
 	else if (action == "CH_ACK" && content == con->name)
 	{
 		std::cout << "CONNECTED" << std::endl;
+
+		clients.push_back(*con);
+
 		Countdown();
 	}
 }
@@ -87,9 +90,7 @@ void Servidor::StartServer()
 			con.name = content;
 			con.port = remotePort;
 			con.ip = remoteIP;
-			clients.push_back(con);
 			Hello(&con, &socket, &inPacket);
-
 		}
 		else if (action == "MSG")
 		{
@@ -102,11 +103,10 @@ void Servidor::StartServer()
 		else if (action == "CH_ACK")
 		{
 			Hello(&con, &socket, &inPacket);
-			
 		}
-		else if (action == "CREATED") {
+		else if (action == "CREATE") {
 			std::cout << "creating game..." << std::endl;
-			//CreateGame(games, con);
+			
 		}
 		else if (action == "JOINED") {
 			std::cout << "joining game..." << std::endl;
@@ -116,24 +116,4 @@ void Servidor::StartServer()
 		//	ping = false;
 		//}
 	}
-}
-
-void Servidor::JoinGame(std::vector<GameRun> games, newConnection client)
-{
-	//Generar terreno del mapa
-}
-
-
-void Servidor::CreateGame(std::vector<GameRun> listOfGames, newConnection client)
-{
-	//Generar distintos threads para cada partida
-	//game.host = client.name;
-	//listOfGames.push_back(game);
-	//std::thread run_game(&Servidor::runGame, this, listOfGames);
-	//g.updateGame();
-}
-
-void Servidor::runGame(std::vector<GameRun> listOfGames) {
-
-	listOfGames[listOfGames.size() - 1].updateGame();
 }
