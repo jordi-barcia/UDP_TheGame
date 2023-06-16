@@ -136,16 +136,17 @@ void Cliente::GameSelected(sf::UdpSocket* sock)
 		sock->send(outPacket, "127.0.0.1", 5000);*/
 		SendPacket(sock, "JOINED", content);
 	}
-	sf::sleep(t1);
+	//sf::sleep(t1);
 }
 
 void Cliente::CreateGame()
 {
 	//Generar distintos threads para cada partida
 	//gc.window.close();
-	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-	std::thread run_game(&GameRun::updateGame, &game);
-	run_game.detach();
+	//std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+	//std::thread run_game(&GameRun::updateGame, &game);
+	//run_game.detach();
+	game.updateGame();
 }
 
 void Cliente::JoinGame(std::vector<GameRun> games)

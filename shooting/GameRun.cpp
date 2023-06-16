@@ -4,19 +4,19 @@ void GameRun::updateGame()
 {
 	setupGame();
 	// App loop
-	while (windowGame.isOpen())
+	while (window.isOpen())
 	{
-		while (windowGame.pollEvent(event))
+		while (window.pollEvent(event))
 		{
 			switch (event.type)
 			{
 			case sf::Event::Closed:
-				windowGame.close(); // Close windowGames if X is pressed 
+				window.close(); // Close windowGames if X is pressed 
 				break;
 			case sf::Event::KeyPressed:
 
 				if (event.key.code == sf::Keyboard::Escape)
-					windowGame.close(); // Close windowGames if ESC is pressed 
+					window.close(); // Close windowGames if ESC is pressed 
 				// Manage events when playing
 					// Checking Movement
 				cDir.x = 0;
@@ -52,12 +52,12 @@ void GameRun::updateGame()
 
 				break;
 
-				windowGame.clear();
-				windowGame.draw(sprite);
+				window.clear();
+				window.draw(sprite);
 
 				// When playing
-				windowGame.draw(character.GetSprite());
-				windowGame.draw(character2.GetSprite());
+				window.draw(character.GetSprite());
+				window.draw(character2.GetSprite());
 
 				// Bullets update
 
@@ -74,20 +74,20 @@ void GameRun::updateGame()
 						continue;
 					}
 					(*it2).Move();
-					windowGame.draw((*it2).GetShape());
+					window.draw((*it2).GetShape());
 					it2++;
 				}
 			}
 		}
 		std::this_thread::sleep_for(std::chrono::milliseconds(10));
-		windowGame.display();
+		window.display();
 	}
 }
 
 void GameRun::setupGame() 
 {
 	// windowGames initialization
-	windowGame.create(sf::VideoMode(850, 600), "Partida");
+	window.create(sf::VideoMode(850, 600), "Game");
 
 	if (!font.loadFromFile("resources/fonts/courbd.ttf"))
 	{

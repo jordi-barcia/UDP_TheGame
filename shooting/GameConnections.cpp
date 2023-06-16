@@ -141,6 +141,8 @@ void GameConnections::RunConnections()
 					{
 						//Join Game
 						joined = true;
+						//std::this_thread::sleep_for(std::chrono::milliseconds(10));
+						break;
 					}
 
 					if(chooseSetUp && nameText.getString() == "2")
@@ -148,6 +150,8 @@ void GameConnections::RunConnections()
 						//Create Game
 						std::cout << "creating game..." << std::endl;
 						created = true;
+						//std::this_thread::sleep_for(std::chrono::milliseconds(10));
+						break;
 					}
 
 					if (chooseSetUp && (!joined && !created)) {
