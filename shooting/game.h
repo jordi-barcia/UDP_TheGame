@@ -10,13 +10,16 @@
 class Game
 {
 	// GUI VARIABLES
-	sf::RenderWindow window;
 	sf::Texture characterTex;
 	sf::Texture bg;
 	sf::Sprite sprite;
+	sf::String message;
+	sf::Text text;
+	sf::Text nameText;
+	sf::Font font;
 	sf::Event event;
+	sf::RectangleShape nameRectangle;
 	sf::String input;
-	
 
 	// GAME VARIABLES
 	sf::Vector2f cDir;
@@ -24,9 +27,25 @@ class Game
 	std::vector<Bullet> bullets;  // Bullet container to manage them
 	Character character2 = Character(sf::Vector2f(40, 40), 2);
 	std::vector<Bullet> bullets2; // Bullet container to manage them
-	
+	std::string challengeWord = "OSADFWE";
 
 public:
-	std::string host = "", guest = "";
-	void updateGame(); // No implemented => Implement it in the Server side
+	sf::RenderWindow window;
+	std::string name;
+	bool playing = false;
+	bool challenge = false;
+	bool shooting = false;
+	bool pingPong = false;
+	bool chooseGame = false;
+	bool chooseSetUp = false;
+	bool joined = false;
+	bool created = false;
+	bool isP1 = false;
+	
+	void updateGame();
+	void setupGame();
+	void ClientSetup();
+	void ChallengeSetUp();
+	void RunConnections();
+	void ChooseGameSetUp();
 };

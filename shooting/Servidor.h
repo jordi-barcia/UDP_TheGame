@@ -7,7 +7,7 @@
 #include <mutex>
 #include "entities.h"
 #include "Cliente.h"
-#include "GameConnections.h"
+#include "game.h"
 #include "Timer.h"
 #include <functional>
 
@@ -24,17 +24,20 @@ class Servidor
 	};
 	std::string action, content;
 	int countdownSeconds = 30;
-	GameConnections gc;
-	std::vector<GameRun>games;
+	Game gc;
+	std::vector<Game>games;
 	Timer timer;
 	std::vector<Timer> timers;
 	bool ping = false;
 	sf::UdpSocket socket;
 	newConnection con;
+	bool create = true;
+	std::vector<bool> hasCreatedGame;
 
 	
 public:
 	std::vector<newConnection> clients;
+	int clientID;
 
 	void Hello(newConnection* con, sf::UdpSocket* sock, sf::Packet* inPacket);
 	void StartServer();

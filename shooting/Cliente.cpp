@@ -146,10 +146,10 @@ void Cliente::CreateGame()
 	//std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 	//std::thread run_game(&GameRun::updateGame, &game);
 	//run_game.detach();
-	game.updateGame();
+	//game.updateGame();
 }
 
-void Cliente::JoinGame(std::vector<GameRun> games)
+void Cliente::JoinGame(std::vector<Game> games)
 {
 	//Generar terreno del mapa
 }

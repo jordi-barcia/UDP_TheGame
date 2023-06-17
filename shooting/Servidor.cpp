@@ -9,7 +9,6 @@ void Servidor::Ping(newConnection* con, sf::UdpSocket* sock) {
 	std::string ping = "PING";
 	outPacket << "PING" << ping;
 	sock->send(outPacket, con->ip, con->port);
-	std::cout << "AAAAAA" << std::endl;
 }
 void Servidor::Hello(newConnection* con, sf::UdpSocket* sock, sf::Packet* inPacket)
 {
@@ -31,6 +30,8 @@ void Servidor::Hello(newConnection* con, sf::UdpSocket* sock, sf::Packet* inPack
 		std::cout << "CONNECTED" << std::endl;
 
 		clients.push_back(*con);
+		create = false;
+		hasCreatedGame.push_back(create);
 
 		Countdown();
 	}
@@ -106,10 +107,50 @@ void Servidor::StartServer()
 		}
 		else if (action == "CREATE") {
 			std::cout << "creating game..." << std::endl;
-			
+			for (int j = 0; j < clients.size(); j++)
+			{
+				if (clients[j].port == socket.getLocalPort())
+				{
+					hasCreatedGame[j] = true;
+				}
+			}
 		}
 		else if (action == "JOINED") {
 			std::cout << "joining game..." << std::endl;
+			int nameChar, diff, lastDiff;
+			for (int j = 0; j < clients.size(); j++)
+			{
+				if (clients[j].port == socket.getLocalPort()) 
+				{
+					nameChar = int(clients[j].name[0]);
+					diff = nameChar;
+					lastDiff = diff;
+					for (int i = 0; i < clients.size(); i++)
+					{
+						if (i != j)
+						{
+							diff = nameChar - int(clients[i].name[0]);
+							if (lastDiff <= diff)
+							{
+								if (hasCreatedGame[i])
+								{
+									lastDiff = diff;
+									clientID = i;
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		else if (action == "EXIT")
+		{
+			//Disconnect client
+		}
+		else if (action == "MOV")
+		{
+			//Validar movimiento
+			//Comunicar a los otros clientes el movimiento del jugador
 		}
 		//if (ping) {
 		//	Ping(&con, &socket);

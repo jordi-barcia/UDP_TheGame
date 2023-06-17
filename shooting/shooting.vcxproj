@@ -157,8 +157,6 @@
   <ItemGroup>
     <ClCompile Include="Cliente.cpp" />
     <ClCompile Include="entities.cpp" />
-    <ClCompile Include="GameConnections.cpp" />
-    <ClCompile Include="GameRun.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="game.cpp" />
     <ClCompile Include="Servidor.cpp" />
@@ -168,8 +166,6 @@
     <ClInclude Include="Cliente.h" />
     <ClInclude Include="entities.h" />
     <ClInclude Include="game.h" />
-    <ClInclude Include="GameConnections.h" />
-    <ClInclude Include="GameRun.h" />
     <ClInclude Include="Servidor.h" />
     <ClInclude Include="Timer.h" />
     <ClInclude Include="utils.h" />

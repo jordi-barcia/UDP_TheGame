@@ -9,9 +9,8 @@
 #include <mutex>
 #include <SFML/Graphics.hpp>
 #include <SFML/System/Vector2.hpp>
-#include "GameConnections.h"
 #include "Timer.h"
-#include "GameRun.h"
+#include "game.h"
 
 class Cliente
 {
@@ -20,11 +19,11 @@ class Cliente
 	sf::Time t1 = sf::seconds(1.0f);
 	Timer timer;
 	bool check = false;
-	GameRun game;
+	Game game;
 
 public:
 	Cliente();
-	GameConnections gc;
+	Game gc;
 	std::string name;
 	sf::IpAddress ip;
 	unsigned short port = 5000;
@@ -37,6 +36,6 @@ public:
 	void Pong();
 	void Check();
 	void CreateGame();
-	void JoinGame(std::vector<GameRun> games);
+	void JoinGame(std::vector<Game> games);
 };
 
