@@ -43,5 +43,6 @@ public:
 	void StartServer();
 	void Countdown();
 	void Ping(newConnection* con, sf::UdpSocket* sock);
+	void Send(newConnection* con, sf::UdpSocket* sock, std::string message);
 };
 

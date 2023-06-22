@@ -112,6 +112,13 @@ void Cliente::ClientMain()
 		if (gc.created || gc.joined) {
 			GameSelected(&socket);
 		}
+		if (action == "NO_GAME")
+		{
+			std::cout << "ASEREGE" << std::endl;
+			noGame = true;
+			GameSelected(&socket);
+			//SendPacket(sock, "CREATE", content);
+		}
 
 		gc.RunConnections();
 	}
@@ -128,13 +135,18 @@ void Cliente::GameSelected(sf::UdpSocket* sock)
 		/*outPacket << "CREATE" << content;
 		sock->send(outPacket, "127.0.0.1", 5000); */
 		SendPacket(sock, "CREATE", content);
-		CreateGame();
+		//CreateGame();
 	}
 	else if (gc.joined) {
 		content = gc.joined;
 		/*outPacket << "JOINED" << content;
 		sock->send(outPacket, "127.0.0.1", 5000);*/
 		SendPacket(sock, "JOINED", content);
+	}
+	else if (noGame) 
+	{
+		SendPacket(sock, "CREATE", content);
+		noGame = false;
 	}
 	//sf::sleep(t1);
 }

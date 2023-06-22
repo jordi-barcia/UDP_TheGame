@@ -20,6 +20,7 @@ class Cliente
 	Timer timer;
 	bool check = false;
 	Game game;
+	bool noGame = false;
 
 public:
 	Cliente();
@@ -28,6 +29,7 @@ public:
 	sf::IpAddress ip;
 	unsigned short port = 5000;
 	int clientID = -1;
+
 
 	void HelloClient(sf::UdpSocket* sock, sf::Packet* inPacket);
 	void SendPacket(sf::UdpSocket* sock, std::string actionMssg, std::string contentMssg);

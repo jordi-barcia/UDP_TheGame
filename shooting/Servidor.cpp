@@ -10,6 +10,12 @@ void Servidor::Ping(newConnection* con, sf::UdpSocket* sock) {
 	outPacket << "PING" << ping;
 	sock->send(outPacket, con->ip, con->port);
 }
+void Servidor::Send(newConnection* con, sf::UdpSocket* sock, std::string message)
+{
+	sf::Packet outPacket;
+	outPacket << action << con->name;
+	sock->send(outPacket, con->ip, con->port);
+}
 void Servidor::Hello(newConnection* con, sf::UdpSocket* sock, sf::Packet* inPacket)
 {
 
@@ -112,30 +118,47 @@ void Servidor::StartServer()
 				if (clients[j].port == socket.getLocalPort())
 				{
 					hasCreatedGame[j] = true;
+					std::cout << "Numero de Games creados: " + games.size() << std::endl;
 				}
 			}
 		}
 		else if (action == "JOINED") {
 			std::cout << "joining game..." << std::endl;
 			int nameChar, diff, lastDiff;
-			for (int j = 0; j < clients.size(); j++)
+			std::cout << games.size() << std::endl;
+			if (games.size() % 2 != 0 || games.size() == 0)
 			{
-				if (clients[j].port == socket.getLocalPort()) 
+				for (int j = 0; j < clients.size(); j++)
 				{
-					nameChar = int(clients[j].name[0]);
-					diff = nameChar;
-					lastDiff = diff;
-					for (int i = 0; i < clients.size(); i++)
+					if (clients[j].port == socket.getLocalPort())
 					{
-						if (i != j)
+						std::cout << "HOla juancarlos" << std::endl;
+						hasCreatedGame[j] = true;
+						Send(&clients[j], &socket, "NO_GAME");
+					}
+				}
+			}
+			else
+			{
+				for (int j = 0; j < clients.size(); j++)
+				{
+					if (clients[j].port == socket.getLocalPort())
+					{
+						nameChar = int(clients[j].name[0]);
+						diff = nameChar;
+						lastDiff = diff;
+						for (int i = 0; i < clients.size(); i++)
 						{
-							diff = nameChar - int(clients[i].name[0]);
-							if (lastDiff <= diff)
+							if (i != j)
 							{
-								if (hasCreatedGame[i])
+								diff = nameChar - int(clients[i].name[0]);
+								if (lastDiff <= diff)
 								{
-									lastDiff = diff;
-									clientID = i;
+									if (hasCreatedGame[i])
+									{
+										lastDiff = diff;
+										clientID = i;
+									}
 								}
 							}
 						}
