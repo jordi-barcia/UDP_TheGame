@@ -2,7 +2,6 @@
 #include <SFML\Network.hpp>
 #include <iostream> 
 #include <future>
-#include <chrono>
 #include <thread>
 #include <mutex>
 #include "entities.h"
@@ -10,10 +9,11 @@
 #include "game.h"
 #include "Timer.h"
 #include <functional>
+#include <map>
 
 class Servidor
 {
-	struct newConnection {
+	struct Client {
 		sf::IpAddress ip;
 		unsigned short port;
 		std::string name;
@@ -24,25 +24,31 @@ class Servidor
 	};
 	std::string action, content;
 	int countdownSeconds = 30;
-	Game gc;
-	std::vector<Game>games;
+	std::map<int,Game>games; // Mapa de juegos
 	Timer timer;
 	std::vector<Timer> timers;
 	bool ping = false;
 	sf::UdpSocket socket;
-	newConnection con;
+	Client con;
 	bool create = true;
 	std::vector<bool> hasCreatedGame;
-
+	std::vector<Timer> clientsTime;
+	Timer pongTimer;
+	float timeTillPingPong = 10;
+	int pongCounter;
+	std::map<std::string, int>clientToGames;
+	int nextGameId = 0;
+	Client GetClosestClient(unsigned short remotePort);
+	Client GetClientFromName(std::string name);
 	
 public:
-	std::vector<newConnection> clients;
+	std::vector<Client> clients;
 	int clientID;
 
-	void Hello(newConnection* con, sf::UdpSocket* sock, sf::Packet* inPacket);
+	void GetLineFromCin_t(std::string* mssg, bool* exit);
+	void Hello(Client* con, sf::UdpSocket* sock, sf::Packet* inPacket);
 	void StartServer();
-	void Countdown();
-	void Ping(newConnection* con, sf::UdpSocket* sock);
-	void Send(newConnection* con, sf::UdpSocket* sock, std::string message);
+	void Ping(Client* con, sf::UdpSocket* sock);
+	void Send(Client* con, sf::UdpSocket* sock, std::string message);
 };
 

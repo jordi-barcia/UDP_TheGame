@@ -30,6 +30,11 @@ class Game
 	std::string challengeWord = "OSADFWE";
 
 public:
+	Game();
+	Game& operator=(const Game& other);
+
+	
+
 	sf::RenderWindow window;
 	std::string name;
 	bool playing = false;
@@ -41,6 +46,9 @@ public:
 	bool joined = false;
 	bool created = false;
 	bool isP1 = false;
+	bool isFirstGame = false;
+	bool hasExit = false;
+	int numOfGames;
 	
 	void updateGame();
 	void setupGame();

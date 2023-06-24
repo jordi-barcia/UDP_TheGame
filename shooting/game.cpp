@@ -1,5 +1,39 @@
 #include "game.h"
 
+
+Game::Game()
+{
+}
+
+Game& Game::operator=(const Game& other)
+{
+	// Verificar la autoasignación
+	if (this == &other) {
+		return *this;
+	}
+
+	characterTex = other.characterTex;
+	bg = other.bg;
+	sprite = other.sprite;
+	message = other.message;
+	text = other.text;
+	nameText = other.nameText;
+	font = other.font;
+	event = other.event;
+	nameRectangle = other.nameRectangle;
+	input = other.input;
+
+	cDir = other.cDir;
+	character = other.character;
+	bullets = other.bullets;
+	character2 = other.character2;
+	bullets2 = other.bullets2;
+
+	return *this;
+}
+
+
+
 void Game::updateGame()
 {
 	//setupGame();
@@ -11,14 +45,16 @@ void Game::updateGame()
 			switch (event.type)
 			{
 			case sf::Event::Closed:
+				hasExit = true;
 				window.close(); // Close windowGames if X is pressed 
 				break;
 			case sf::Event::KeyPressed:
 
 				if (event.key.code == sf::Keyboard::Escape)
-					window.close(); // Close windowGames if ESC is pressed 
-				// Manage events when playing
-					// Checking Movement
+					hasExit = true;
+				window.close(); // Close windowGames if ESC is pressed 
+			// Manage events when playing
+				// Checking Movement
 				cDir.x = 0;
 				cDir.y = 0;
 				if (sf::Keyboard::isKeyPressed(sf::Keyboard::W))
@@ -54,29 +90,6 @@ void Game::updateGame()
 
 				window.clear();
 				window.draw(sprite);
-
-				//// When playing
-				//window.draw(character.GetSprite());
-				//window.draw(character2.GetSprite());
-
-				//// Bullets update
-
-				//auto it2 = bullets.begin();
-				//while (it2 != bullets.end()) {
-
-				//	if (character2.CheckShoot(*it2)) {
-				//		it2 = bullets.erase(it2);
-				//		continue;
-				//	}
-				//	// If out-of-bounds, the bullet is erased from the list
-				//	if ((*it2).OutOfBounds()) {
-				//		it2 = bullets.erase(it2);
-				//		continue;
-				//	}
-				//	(*it2).Move();
-				//	window.draw((*it2).GetShape());
-				//	it2++;
-				//}
 			}
 		}
 		std::this_thread::sleep_for(std::chrono::milliseconds(10));
@@ -170,11 +183,14 @@ void Game::RunConnections()
 		switch (event.type)
 		{
 		case sf::Event::Closed:
+			hasExit = true;
 			window.close(); // Close windows if X is pressed 
 			break;
 		case sf::Event::KeyPressed:
-			if (event.key.code == sf::Keyboard::Escape)
+			if (event.key.code == sf::Keyboard::Escape) {
+				hasExit = true;
 				window.close(); // Close windows if ESC is pressed 
+			}
 			if (playing) { // Manage events when playing
 				// Checking Movement
 				cDir.x = 0;
@@ -188,6 +204,7 @@ void Game::RunConnections()
 				else if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
 					cDir.x++;
 				character.Move(cDir);
+				character2.Move(cDir);
 				// Managing Shooting
 				if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space)) {
 					cDir.x = 1; // Default shoot direction
@@ -206,8 +223,9 @@ void Game::RunConnections()
 					else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
 						cDir.x = 1;
 					bullets.push_back(Bullet(character.GetPos(), cDir));
+					bullets.push_back(Bullet(character2.GetPos(), cDir));
 				}
-				
+
 				break;
 			}
 			if (!playing) {
@@ -238,19 +256,35 @@ void Game::RunConnections()
 
 					if (chooseSetUp && nameText.getString() == "1")
 					{
-						//Join Game
-						joined = true;
-						isP1 = false;
-						//Tratar conexion  del jugador 2 a la partida del jugador 1
-						
-						//std::this_thread::sleep_for(std::chrono::milliseconds(10));
-						//break;
+						if (isFirstGame)
+						{
+							//Create Game
+							//std::cout << "creating game..." << std::endl;
+							created = true;
+							//setupGame();
+							playing = true;
+							chooseSetUp = false;
+							isP1 = true;
+							isFirstGame = false;
+						}
+						else
+						{
+							//Join Game
+							joined = true;
+							isP1 = false;
+							playing = true;
+							chooseSetUp = false;
+							//Tratar conexion  del jugador 2 a la partida del jugador 1
+							//std::this_thread::sleep_for(std::chrono::milliseconds(10));
+							//break;
+						}
+
 					}
 
 					if (chooseSetUp && nameText.getString() == "2")
 					{
 						//Create Game
-						std::cout << "creating game..." << std::endl;
+						//std::cout << "creating game..." << std::endl;
 						created = true;
 						//setupGame();
 						playing = true;

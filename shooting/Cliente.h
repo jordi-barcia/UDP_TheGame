@@ -16,11 +16,11 @@ class Cliente
 {
 	//Client
 	std::string action, content;
-	sf::Time t1 = sf::seconds(1.0f);
 	Timer timer;
 	bool check = false;
 	Game game;
 	bool noGame = false;
+	int packetCounter = 0;
 
 public:
 	Cliente();
@@ -30,13 +30,11 @@ public:
 	unsigned short port = 5000;
 	int clientID = -1;
 
-
+	void GetLineFromCin_t(std::string* mssg, bool* exit);
 	void HelloClient(sf::UdpSocket* sock, sf::Packet* inPacket);
 	void SendPacket(sf::UdpSocket* sock, std::string actionMssg, std::string contentMssg);
 	void ClientMain();
 	void GameSelected(sf::UdpSocket* sock);
-	void Pong();
-	void Check();
 	void CreateGame();
 	void JoinGame(std::vector<Game> games);
 };
