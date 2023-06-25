@@ -14,7 +14,7 @@ Game::Game()
 
 Game& Game::operator=(const Game& other)
 {
-	// Verificar la autoasignación
+	// Verificar la autoasignaciÃ³n
 	if (this == &other) {
 		return *this;
 	}

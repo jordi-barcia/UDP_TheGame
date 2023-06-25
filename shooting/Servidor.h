@@ -38,7 +38,7 @@ public:
 	std::vector<Client> clients;
 	int clientID;
 
-	void GetLineFromCin_t(std::string* mssg, bool* exit);
+	void ShutdownServer(std::string* mssg, bool* exit);
 	void Hello(Client* con, sf::UdpSocket* sock);
 	void StartServer();
 	void Send(Client* con, sf::UdpSocket* sock, std::string message);

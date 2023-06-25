@@ -21,6 +21,15 @@ class Cliente
 	bool noGame = false;
 	int packetCounter = 0;
 
+	struct Packet
+	{
+		int packetID = -1;
+		std::string clientName;
+		float ts;
+		std::string packetAction;
+		std::string packetContent;
+	};
+
 	unsigned short serverPort = 5000;
 	sf::IpAddress serverIp = "127.0.0.1";
 
@@ -29,6 +38,9 @@ class Cliente
 	sf::IpAddress ip;
 	unsigned short port = 5000;
 	int clientID = -1;
+
+	std::vector<Packet> packets;
+	
 
 public:
 	Cliente() = default;

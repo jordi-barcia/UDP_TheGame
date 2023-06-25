@@ -21,7 +21,6 @@ int Servidor::GetClosestClient(unsigned short remotePort) {
 			break;
 		}
 	}
-
 	return closestClient;
 }
 
@@ -36,7 +35,7 @@ Servidor::Client Servidor::GetClientFromName(std::string name)
 	}
 }
 
-void Servidor::GetLineFromCin_t(std::string* mssg, bool* exit) {
+void Servidor::ShutdownServer(std::string* mssg, bool* exit) {
 	while (*exit) {
 		std::string line;
 		std::getline(std::cin, line);
@@ -53,6 +52,7 @@ void Servidor::GetLineFromCin_t(std::string* mssg, bool* exit) {
 				}
 				clients.erase(clients.begin(), clients.begin() + clients.size());
 				*exit = false;
+				std::terminate();
 			}
 		}
 	}
@@ -65,6 +65,7 @@ void Servidor::Send(Client* con, sf::UdpSocket* sock, std::string message)
 	sock->send(outPacket, con->ip, con->port);
 	std::cout << "Sending: " + message << " " + con->name << " " + con->port << std::endl;
 }
+
 void Servidor::Hello(Client* con, sf::UdpSocket* sock)
 {
 	//SEND
@@ -98,21 +99,21 @@ void Receive(sf::UdpSocket* socket, sf::Packet* inPacket, unsigned short* remote
 
 //void Servidor::Ping(std::atomic_bool* stopThread)
 //{
-//	std::cout << "Ping Thread ID: " << std::this_thread::get_id() << std::endl;
-//	auto startTime = std::chrono::steady_clock::now();
-//	auto duration = std::chrono::steady_clock::now() - startTime;
-//	while (std::chrono::duration_cast<std::chrono::milliseconds>(duration).count() < 10000)
-//	{
-//		duration = std::chrono::steady_clock::now() - startTime;
-//		std::cout << "Ping Duration: " << std::chrono::duration_cast<std::chrono::milliseconds>(duration).count() << std::endl;
-//		if (stopThread)
-//		{
-//			return;
-//		}
-//	}
+//    std::cout << "Ping Thread ID: " << std::this_thread::get_id() << std::endl;
+//    auto startTime = std::chrono::steady_clock::now();
+//    auto duration = std::chrono::steady_clock::now() - startTime;
+//    while (std::chrono::duration_cast<std::chrono::milliseconds>(duration).count() < 10000)
+//    {
+//        duration = std::chrono::steady_clock::now() - startTime;
+//        std::cout << "Ping Duration: " << std::chrono::duration_cast<std::chrono::milliseconds>(duration).count() << std::endl;
+//        if (stopThread)
+//        {
+//            return;
+//        }
+//    }
 //
-//	std::cout << "Ping Duration Out Bucle: " << std::chrono::duration_cast<std::chrono::milliseconds>(duration).count() << std::endl;
-//	Send(&con, &socket, "PING");
+//    std::cout << "Ping Duration Out Bucle: " << std::chrono::duration_cast<std::chrono::milliseconds>(duration).count() << std::endl;
+//    Send(&con, &socket, "PING");
 //}
 
 std::thread timer;
@@ -143,7 +144,7 @@ void Servidor::StartServer()
 
 	//Threads
 	std::atomic_bool stopThreadTimer;
-	std::thread read_console_t(&Servidor::GetLineFromCin_t, this, &sendMessage, &exit);
+	std::thread read_console_t(&Servidor::ShutdownServer, this, &sendMessage, &exit);
 	read_console_t.detach();
 	std::thread receiveFromClients(Receive, &socket, &inPacket, &remotePort, &remoteIP, &action, &content);
 	receiveFromClients.detach();
@@ -173,6 +174,7 @@ void Servidor::StartServer()
 			else if (action == "CH_ACK")
 			{
 				Hello(&con, &socket);
+				
 				//EMPEZAR PROCESO DE PING PONG
 			}
 			else if (action == "CREATE") {
@@ -207,13 +209,19 @@ void Servidor::StartServer()
 			{
 				for (int i = 0; i < clients.size(); i++)
 				{
-					if (clients[i].port == remotePort)
+					if (clients[i].name == content)
 					{
 						std::cout << "DISCONNECTED: " << clients[i].name + " " << clients[i].port << std::endl;
 						clients.erase(clients.begin() + i);
 					}
 				}
 			}
+
+			else if (action == "PONG")
+			{
+				// Es fa algo?
+			}
+
 			else if (action == "MOV")
 			{
 				//Validar movimiento
@@ -237,6 +245,10 @@ void Servidor::StartServer()
 				Send(&con, &socket, "PING");
 				startTime = std::chrono::steady_clock::now();
 				pingCounter++;
+			}
+			else if (std::chrono::duration_cast<std::chrono::milliseconds>(duration).count() >= 10000 && pingCounter >= 4)
+			{
+				action == "EXIT_CL";
 			}
 		}
 
