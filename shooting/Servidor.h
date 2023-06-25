@@ -4,10 +4,6 @@
 #include <future>
 #include <thread>
 #include <mutex>
-#include "entities.h"
-#include "Cliente.h"
-#include "game.h"
-#include "Timer.h"
 #include <functional>
 #include <map>
 
@@ -22,19 +18,21 @@ class Servidor
 		std::string challenge; // Pregunta del challenge
 		std::string solution; // Respuesta al challenge
 	};
+
+	struct Game {
+	};
+
 	std::string action, content;
 	std::map<int,Game>games; // Mapa de juegos
-	std::vector<Timer> timers;
 	sf::UdpSocket socket;
 	Client con;
 	bool create = true;
 	std::vector<bool> hasCreatedGame;
-	std::vector<Timer> clientsTime;
 	std::map<std::string, int>clientToGames;
 	int nextGameId = 0;
 	int GetClosestClient(unsigned short remotePort);
 	Client GetClientFromName(std::string name);
-	void Ping(std::atomic_bool* stopThread);
+	//void Ping(std::atomic_bool* stopThread);
 	
 public:
 	std::vector<Client> clients;
@@ -44,6 +42,5 @@ public:
 	void Hello(Client* con, sf::UdpSocket* sock);
 	void StartServer();
 	void Send(Client* con, sf::UdpSocket* sock, std::string message);
-	
 };
 

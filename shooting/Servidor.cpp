@@ -1,7 +1,5 @@
 #include "Servidor.h"
 
-
-
 int Servidor::GetClosestClient(unsigned short remotePort) {
 	int nameChar, diff, minDiff = INT_MAX;
 	int closestClient = -1;
@@ -26,7 +24,6 @@ int Servidor::GetClosestClient(unsigned short remotePort) {
 
 	return closestClient;
 }
-
 
 Servidor::Client Servidor::GetClientFromName(std::string name)
 {
@@ -60,14 +57,6 @@ void Servidor::GetLineFromCin_t(std::string* mssg, bool* exit) {
 		}
 	}
 }
-
-
-//void Servidor::Ping(Client* con, sf::UdpSocket* sock) {
-//	sf::Packet outPacket;
-//	action = "PING";
-//	outPacket << action << con->name;
-//	sock->send(outPacket, con->ip, con->port);
-//}
 
 void Servidor::Send(Client* con, sf::UdpSocket* sock, std::string message)
 {
@@ -141,11 +130,11 @@ void Servidor::StartServer()
 
 	sf::Packet inPacket, outPacket;
 	std::string sendMessage, rcvMessage;
-	unsigned int port;
+	unsigned int port = 0;
 
 	// Application loop
 	sf::IpAddress remoteIP;
-	unsigned short remotePort;
+	unsigned short remotePort = 0;
 	
 	//Time
 	auto startTime = std::chrono::steady_clock::now();
@@ -158,7 +147,6 @@ void Servidor::StartServer()
 	read_console_t.detach();
 	std::thread receiveFromClients(Receive, &socket, &inPacket, &remotePort, &remoteIP, &action, &content);
 	receiveFromClients.detach();
-
 
 	while (exit) {
 		// Logic for receiving
@@ -186,7 +174,6 @@ void Servidor::StartServer()
 			{
 				Hello(&con, &socket);
 				//EMPEZAR PROCESO DE PING PONG
-				
 			}
 			else if (action == "CREATE") {
 				std::cout << "creating game..." << std::endl;
@@ -195,7 +182,7 @@ void Servidor::StartServer()
 					if (clients[j].port == remotePort)
 					{
 						hasCreatedGame[j] = true;
-						games[nextGameId] = Game();
+						games[nextGameId] = Game{};
 						clientToGames[clients[j].name] = nextGameId;
 						nextGameId++;
 						std::cout << "Numero de Games creados: " << games.size() << std::endl;
@@ -216,7 +203,6 @@ void Servidor::StartServer()
 				Send(&ClientName, &socket, "JOIN_ACK");
 				inPacket.clear();
 			}
-
 			else if (action == "EXIT_CL")
 			{
 				for (int i = 0; i < clients.size(); i++)
@@ -228,7 +214,6 @@ void Servidor::StartServer()
 					}
 				}
 			}
-
 			else if (action == "MOV")
 			{
 				//Validar movimiento
@@ -239,7 +224,7 @@ void Servidor::StartServer()
 		}
 		else
 		{
-			std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(duration).count() << std::endl;
+			//std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(duration).count() << std::endl;
 			duration = std::chrono::steady_clock::now() - startTime;
 			if (std::chrono::duration_cast<std::chrono::milliseconds>(duration).count() >= 10000)
 			{

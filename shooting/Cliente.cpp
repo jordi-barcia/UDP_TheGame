@@ -1,20 +1,5 @@
 #include "Cliente.h"
 
-void Cliente::GetLineFromCin_t(std::string* mssg, bool* exit)
-{
-	while (*exit) {
-		std::string line;
-		std::getline(std::cin, line);
-		mssg->assign(line);
-	}
-}
-
-
-//void Cliente::Pong() {
-//	std::cout << "PING RECIBIDO" << std::endl;
-//}
-
-
 void Cliente::HelloClient(sf::UdpSocket* sock, sf::Packet* inPacket)
 {
 	//SEND
@@ -42,20 +27,16 @@ void Cliente::SendPacket(sf::UdpSocket* sock, std::string actionMssg, std::strin
 	std::cout << "Sending: " + actionMssg << " " + contentMssg << std::endl;
 }
 
-
 void Cliente::ClientMain()
 {
 	// Aplication init
 	bool exit = true;
 	sf::UdpSocket socket;
 
-
 	// Client mode
 	std::cout << "Client mode running" << std::endl;
 
-
 	socket.bind(socket.getLocalPort());
-	//std::cin >> name;
 
 	sf::Packet inPacket, outPacket;
 	std::string sendMessage, rcvMessage;
@@ -64,12 +45,8 @@ void Cliente::ClientMain()
 	unsigned short serverPort = 5000;
 
 	//Threads
-	std::thread read_console_t(&Cliente::GetLineFromCin_t, this, &action, &exit);
-	read_console_t.detach();
 	std::thread receive(&Cliente::RecieveMessage, this, &socket, &action, &content);
 	receive.detach();
-	//std::thread printScreen(&Cliente::printSomething, this);
-	//printScreen.detach();
 
 	bool hasHello = false;
 
@@ -109,7 +86,7 @@ void Cliente::ClientMain()
 			SendPacket(&socket, "CREATE", content);
 		}*/
 
-		gc.RunConnections();
+		gc.updateGame();
 
 		if (gc.hasExit || action == "EXIT")
 		{
