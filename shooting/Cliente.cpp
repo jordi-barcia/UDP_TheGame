@@ -1,24 +1,9 @@
 #include "Cliente.h"
 
-void Cliente::GetLineFromCin_t(std::string* mssg, bool* exit)
-{
-	while (*exit) {
-		std::string line;
-		std::getline(std::cin, line);
-		mssg->assign(line);
-	}
-}
-
-
-//void Cliente::Pong() {
-//	std::cout << "PING RECIBIDO" << std::endl;
-//}
-
 
 void Cliente::HelloClient(sf::UdpSocket* sock, sf::Packet* inPacket)
 {
 	//SEND
-	//*inPacket >> action >> content;
 	if (action == "CH_SYN")
 	{
 		SendPacket(sock, "CH_ACK", gc.name);
@@ -55,7 +40,6 @@ void Cliente::ClientMain()
 
 
 	socket.bind(socket.getLocalPort());
-	//std::cin >> name;
 
 	sf::Packet inPacket, outPacket;
 	std::string sendMessage, rcvMessage;
@@ -64,12 +48,8 @@ void Cliente::ClientMain()
 	unsigned short serverPort = 5000;
 
 	//Threads
-	std::thread read_console_t(&Cliente::GetLineFromCin_t, this, &action, &exit);
-	read_console_t.detach();
 	std::thread receive(&Cliente::RecieveMessage, this, &socket, &action, &content);
 	receive.detach();
-	//std::thread printScreen(&Cliente::printSomething, this);
-	//printScreen.detach();
 
 	bool hasHello = false;
 
@@ -82,7 +62,6 @@ void Cliente::ClientMain()
 
 			if (action == "CH_SYN")
 			{
-				HelloClient(&socket, &inPacket);
 				hasHello = true;
 			}
 		}
@@ -93,10 +72,6 @@ void Cliente::ClientMain()
 			action = "";
 		}
 
-		/*if (action == "PING") {
-			std::cout << "PING RECIBIDO" << std::endl;
-			SendPacket(&socket, "PONG", name);
-		}*/
 
 		if (gc.created || gc.joined) {
 			GameSelected(&socket);
@@ -117,6 +92,12 @@ void Cliente::ClientMain()
 			SendPacket(&socket, "EXIT_CL", content);
 			break;
 		}
+
+		if (action == "PING")
+		{
+			SendPacket(&socket, "PONG", gc.name);
+			action = "";
+		}
 	}
 	// When the application loop is broken, we have to release resources
 }
@@ -128,17 +109,12 @@ void Cliente::GameSelected(sf::UdpSocket* sock)
 	//SEND
 	if (gc.created) {
 		content = gc.name;
-		/*outPacket << "CREATE" << content;
-		sock->send(outPacket, "127.0.0.1", 5000); */
 		SendPacket(sock, "CREATE", content);
 		gc.created = false;
 		packetCounter++;
-		//CreateGame();
 	}
 	else if (gc.joined) {
 		content = gc.name;
-		/*outPacket << "JOINED" << content;
-		sock->send(outPacket, "127.0.0.1", 5000);*/
 		SendPacket(sock, "JOINED", content);
 		gc.joined = false;
 		packetCounter++;
@@ -149,23 +125,8 @@ void Cliente::GameSelected(sf::UdpSocket* sock)
 		packetCounter++;
 		noGame = false;
 	}
-	//sf::sleep(t1);
 }
 
-void Cliente::CreateGame()
-{
-	//Generar distintos threads para cada partida
-	//gc.window.close();
-	//std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-	//std::thread run_game(&GameRun::updateGame, &game);
-	//run_game.detach();
-	//game.updateGame();
-}
-
-void Cliente::JoinGame(std::vector<Game> games)
-{
-	//Generar terreno del mapa
-}
 
 void Cliente::RecieveMessage(sf::UdpSocket* sock, std::string* actionMssg, std::string* contentMssg)
 {
@@ -179,11 +140,4 @@ void Cliente::RecieveMessage(sf::UdpSocket* sock, std::string* actionMssg, std::
 	}
 }
 
-void Cliente::printSomething()
-{
-	while (true)
-	{
-		std::cout << "Threads activos" << std::endl;
-	}
-}
 

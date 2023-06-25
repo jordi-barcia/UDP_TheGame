@@ -21,6 +21,15 @@ class Cliente
 	bool noGame = false;
 	int packetCounter = 0;
 
+	struct Packet
+	{
+		int packetID = -1;
+		std::string clientName;
+		float ts;
+		std::string packetAction;
+		std::string packetContent;
+	};
+
 	unsigned short serverPort = 5000;
 	sf::IpAddress serverIp = "127.0.0.1";
 
@@ -30,10 +39,12 @@ class Cliente
 	unsigned short port = 5000;
 	int clientID = -1;
 
+	std::vector<Packet> packets;
+	
+
 public:
 	Cliente() = default;
 
-	void GetLineFromCin_t(std::string* mssg, bool* exit);
 	void HelloClient(sf::UdpSocket* sock, sf::Packet* inPacket);
 	void SendPacket(sf::UdpSocket* sock, std::string actionMssg, std::string contentMssg);
 	void ClientMain();

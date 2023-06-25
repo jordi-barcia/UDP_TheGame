@@ -3,15 +3,6 @@
 #include "Cliente.h"
 #include "entities.h"
 
-// Funcion para leer la consola
-void GetLineFromCin_t(std::string* mssg, bool* exit) {
-	while (*exit) {
-		std::string line;
-		std::getline(std::cin, line);
-		mssg->assign(line);
-	}
-}
-
 int main()
 {
 	bool exit = true;
