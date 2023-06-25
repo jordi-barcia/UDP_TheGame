@@ -12,17 +12,13 @@ int main()
 	std::cin >> mode_str;
 	mode = std::stoi(mode_str);
 	
-
 	if (mode == 1) // SERVER
 	{
 		Servidor s;
 		s.StartServer();
 	}
 	else if (mode == 2){
-		
 		Cliente c; // Cliente c = new Cliente(..., ..., ...) 
 		c.ClientMain();
 	}
-
-
 }

@@ -24,7 +24,6 @@ int Servidor::GetClosestClient(unsigned short remotePort) {
 	return closestClient;
 }
 
-
 Servidor::Client Servidor::GetClientFromName(std::string name)
 {
 	for (int i = 0; i < clients.size(); i++)
@@ -58,7 +57,6 @@ void Servidor::ShutdownServer(std::string* mssg, bool* exit) {
 		}
 	}
 }
-
 
 void Servidor::Send(Client* con, sf::UdpSocket* sock, std::string message)
 {
@@ -133,11 +131,11 @@ void Servidor::StartServer()
 
 	sf::Packet inPacket, outPacket;
 	std::string sendMessage, rcvMessage;
-	unsigned int port;
+	unsigned int port = 0;
 
 	// Application loop
 	sf::IpAddress remoteIP;
-	unsigned short remotePort;
+	unsigned short remotePort = 0;
 	
 	//Time
 	auto startTime = std::chrono::steady_clock::now();
@@ -150,7 +148,6 @@ void Servidor::StartServer()
 	read_console_t.detach();
 	std::thread receiveFromClients(Receive, &socket, &inPacket, &remotePort, &remoteIP, &action, &content);
 	receiveFromClients.detach();
-
 
 	while (exit) {
 		// Logic for receiving
@@ -179,7 +176,6 @@ void Servidor::StartServer()
 				Hello(&con, &socket);
 				
 				//EMPEZAR PROCESO DE PING PONG
-				
 			}
 			else if (action == "CREATE") {
 				std::cout << "creating game..." << std::endl;
@@ -209,7 +205,6 @@ void Servidor::StartServer()
 				Send(&ClientName, &socket, "JOIN_ACK");
 				inPacket.clear();
 			}
-
 			else if (action == "EXIT_CL")
 			{
 				for (int i = 0; i < clients.size(); i++)

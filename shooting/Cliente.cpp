@@ -1,6 +1,5 @@
 #include "Cliente.h"
 
-
 void Cliente::HelloClient(sf::UdpSocket* sock, sf::Packet* inPacket)
 {
 	//SEND
@@ -27,17 +26,14 @@ void Cliente::SendPacket(sf::UdpSocket* sock, std::string actionMssg, std::strin
 	std::cout << "Sending: " + actionMssg << " " + contentMssg << std::endl;
 }
 
-
 void Cliente::ClientMain()
 {
 	// Aplication init
 	bool exit = true;
 	sf::UdpSocket socket;
 
-
 	// Client mode
 	std::cout << "Client mode running" << std::endl;
-
 
 	socket.bind(socket.getLocalPort());
 
@@ -84,7 +80,7 @@ void Cliente::ClientMain()
 			SendPacket(&socket, "CREATE", content);
 		}*/
 
-		gc.RunConnections();
+		gc.updateGame();
 
 		if (gc.hasExit || action == "EXIT")
 		{

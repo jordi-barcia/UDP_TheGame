@@ -19,13 +19,11 @@ class Servidor
 		std::string solution; // Respuesta al challenge
 	};
 
-	struct Game
-	{
-		
+	struct Game {
 	};
 
 	std::string action, content;
-	std::map<int, Game>games; // Mapa de juegos
+	std::map<int,Game>games; // Mapa de juegos
 	sf::UdpSocket socket;
 	Client con;
 	bool create = true;
@@ -34,7 +32,7 @@ class Servidor
 	int nextGameId = 0;
 	int GetClosestClient(unsigned short remotePort);
 	Client GetClientFromName(std::string name);
-	void Ping(std::atomic_bool* stopThread);
+	//void Ping(std::atomic_bool* stopThread);
 	
 public:
 	std::vector<Client> clients;
@@ -44,6 +42,5 @@ public:
 	void Hello(Client* con, sf::UdpSocket* sock);
 	void StartServer();
 	void Send(Client* con, sf::UdpSocket* sock, std::string message);
-	
 };
 
