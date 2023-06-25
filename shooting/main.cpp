@@ -29,7 +29,7 @@ int main()
 	}
 	else if (mode == 2){
 		
-		Cliente c;
+		Cliente c; // Cliente c = new Cliente(..., ..., ...) 
 		c.ClientMain();
 	}
 

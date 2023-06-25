@@ -1,12 +1,5 @@
 #include "Cliente.h"
 
-Cliente::Cliente()
-{
-	this->ip = "127.0.0.1";
-	this->port = 5000;
-	this->name = gc.name;
-}
-
 void Cliente::GetLineFromCin_t(std::string* mssg, bool* exit)
 {
 	while (*exit) {
@@ -24,27 +17,17 @@ void Cliente::GetLineFromCin_t(std::string* mssg, bool* exit)
 
 void Cliente::HelloClient(sf::UdpSocket* sock, sf::Packet* inPacket)
 {
-	sf::Packet outPacket;
-
-	std::cout << "Debug Action/Content " << action << " " << content << std::endl;
 	//SEND
 	//*inPacket >> action >> content;
 	if (action == "CH_SYN")
 	{
-		gc.name = content;
-		outPacket << "CH_ACK" << gc.name;
-		sock->send(outPacket, "127.0.0.1", 5000);
-		std::cout << "ENVIO" << std::endl;
+		SendPacket(sock, "CH_ACK", gc.name);
 		packetCounter++;
 	}
 	else
 	{
-		outPacket << "HELLO" << gc.name;
+		SendPacket(sock, "HELLO", gc.name);
 		packetCounter++;
-		if (sock->send(outPacket, "127.0.0.1", 5000) != sf::Socket::Done)
-		{
-			//This is an error
-		}
 	}
 }
 
@@ -52,7 +35,11 @@ void Cliente::SendPacket(sf::UdpSocket* sock, std::string actionMssg, std::strin
 {
 	sf::Packet outPacket;
 	outPacket << actionMssg << contentMssg;
-	sock->send(outPacket, "127.0.0.1", 5000);
+	if (sock->send(outPacket, "127.0.0.1", 5000) != sock->Done)
+	{
+		std::cout << "Sending error: " << sock->Error << std::endl;
+	}
+	std::cout << "Sending: " + actionMssg << " " + contentMssg << std::endl;
 }
 
 
@@ -61,7 +48,7 @@ void Cliente::ClientMain()
 	// Aplication init
 	bool exit = true;
 	sf::UdpSocket socket;
-	
+
 
 	// Client mode
 	std::cout << "Client mode running" << std::endl;
@@ -80,37 +67,26 @@ void Cliente::ClientMain()
 	std::thread read_console_t(&Cliente::GetLineFromCin_t, this, &action, &exit);
 	read_console_t.detach();
 
+	//std::thread printScreen(&Cliente::printSomething, this);
+	//printScreen.detach();
+
+	bool hasHello = false;
+
 	gc.ClientSetup();
 	while (true) {
-		if (!gc.pingPong && gc.chooseGame) {
+		
+		std::thread receive(&Cliente::RecieveMessage, this, &socket, &action, &content);
+		receive.detach();
+
+		if (gc.chooseGame && !hasHello)
+		{
 			HelloClient(&socket, &inPacket);
-			// Logic for receiving
-			socket.receive(inPacket, serverIP, serverPort);
-			inPacket >> action >> content;
 
-			std::cout << action << " " << content << " " << serverPort << std::endl;
-
-			if (action == "HELLO" || action == "CH_ACK")
-			{
-				//Aqui se tiene que tratar, Conexion con otros clientes
-			}
-			else if (action == "CH_SYN")
+			if (action == "CH_SYN")
 			{
 				HelloClient(&socket, &inPacket);
+				hasHello = true;
 			}
-			gc.pingPong = true;
-		}		
-		else if (!check && gc.pingPong) {
-			// Logic for receiving
-			//socket.receive(inPacket, serverIP, serverPort);
-			//inPacket >> action >> content;
-			check = true;
-			//Check();
-		}
-		//std::cout << check << std::endl;
-		if (action == "MSG")
-		{
-
 		}
 
 		if (action == "JOIN_ACK")
@@ -118,22 +94,22 @@ void Cliente::ClientMain()
 			std::cout << "JOINED GAME" << std::endl;
 		}
 
-		if (action == "PING") {
+		/*if (action == "PING") {
 			std::cout << "PING RECIBIDO" << std::endl;
 			SendPacket(&socket, "PONG", name);
-		}
+		}*/
 
 		if (gc.created || gc.joined) {
 			GameSelected(&socket);
 		}
-		if (action == "NO_GAME")
+
+		/*if (action == "NO_GAME") //Para que el cliente le envie CREATE al server en el caso de que no haya games creados
 		{
-			std::cout << "ASEREGE" << std::endl;
 			noGame = true;
 			GameSelected(&socket);
 			SendPacket(&socket, "CREATE", content);
-		}
-		
+		}*/
+
 		gc.RunConnections();
 
 		if (gc.hasExit || action == "EXIT")
@@ -152,7 +128,7 @@ void Cliente::GameSelected(sf::UdpSocket* sock)
 
 	//SEND
 	if (gc.created) {
-		content = name;
+		content = gc.name;
 		/*outPacket << "CREATE" << content;
 		sock->send(outPacket, "127.0.0.1", 5000); */
 		SendPacket(sock, "CREATE", content);
@@ -161,13 +137,14 @@ void Cliente::GameSelected(sf::UdpSocket* sock)
 		//CreateGame();
 	}
 	else if (gc.joined) {
-		content = name;
+		content = gc.name;
 		/*outPacket << "JOINED" << content;
 		sock->send(outPacket, "127.0.0.1", 5000);*/
 		SendPacket(sock, "JOINED", content);
+		gc.joined = false;
 		packetCounter++;
 	}
-	else if (noGame) 
+	else if (noGame)
 	{
 		SendPacket(sock, "CREATE", content);
 		packetCounter++;
@@ -189,5 +166,24 @@ void Cliente::CreateGame()
 void Cliente::JoinGame(std::vector<Game> games)
 {
 	//Generar terreno del mapa
+}
+
+void Cliente::RecieveMessage(sf::UdpSocket* sock, std::string* actionMssg, std::string* contentMssg)
+{
+	//while (true)
+	//{
+	sf::Packet inPacket;
+	sock->receive(inPacket, serverIp, serverPort);
+	inPacket >> *actionMssg >> *contentMssg;
+	std::cout << "Receive: " + *actionMssg << " " + *contentMssg << std::endl;
+	//}
+}
+
+void Cliente::printSomething()
+{
+	while (true)
+	{
+		std::cout << "Threads activos" << std::endl;
+	}
 }
 

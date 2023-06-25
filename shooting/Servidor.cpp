@@ -1,34 +1,30 @@
 #include "Servidor.h"
 
-Servidor::Client Servidor::GetClosestClient(unsigned short remotePort)
-{
-	int nameChar, diff, lastDiff;
-	for (int j = 0; j < clients.size(); j++)
-	{
-		if (clients[j].port == remotePort)
-		{
-			nameChar = int(clients[j].name[0]);
-			diff = nameChar;
-			lastDiff = diff;
-			for (int i = 0; i < clients.size(); i++)
-			{
-				if (i != j)
-				{
-					diff = nameChar - int(clients[i].name[0]);
-					if (lastDiff <= diff)
-					{
-						if (hasCreatedGame[i])
-						{
-							lastDiff = diff;
-							return clients[i];
-						}
+int Servidor::GetClosestClient(unsigned short remotePort) {
+	int nameChar, diff, minDiff = INT_MAX;
+	int closestClient = -1;
+
+	for (int j = 0; j < clients.size(); j++) {
+		if (clients[j].port == remotePort) {
+			nameChar = static_cast<int>(clients[j].name[0]);
+
+			for (int i = 0; i < clients.size(); i++) {
+				if (i != j && hasCreatedGame[i]) {
+					diff = std::abs(nameChar - static_cast<int>(clients[i].name[0]));
+
+					if (diff < minDiff) {
+						minDiff = diff;
+						closestClient = i;
 					}
 				}
 			}
+			break;
 		}
 	}
-	
+
+	return closestClient;
 }
+
 
 Servidor::Client Servidor::GetClientFromName(std::string name)
 {
@@ -50,30 +46,26 @@ void Servidor::GetLineFromCin_t(std::string* mssg, bool* exit) {
 }
 
 
-void Servidor::Ping(Client* con, sf::UdpSocket* sock) {
-	sf::Packet outPacket;
-	action = "PING";
-	outPacket << action << con->name;
-	sock->send(outPacket, con->ip, con->port);
-}
+//void Servidor::Ping(Client* con, sf::UdpSocket* sock) {
+//	sf::Packet outPacket;
+//	action = "PING";
+//	outPacket << action << con->name;
+//	sock->send(outPacket, con->ip, con->port);
+//}
+
 void Servidor::Send(Client* con, sf::UdpSocket* sock, std::string message)
 {
 	sf::Packet outPacket;
-	outPacket << action << con->name;
+	outPacket << message << con->name;
 	sock->send(outPacket, con->ip, con->port);
+	std::cout << "Sending: " + message << " " + con->name << " " + con->port << std::endl;
 }
-void Servidor::Hello(Client* con, sf::UdpSocket* sock, sf::Packet* inPacket)
+void Servidor::Hello(Client* con, sf::UdpSocket* sock)
 {
-	sf::Packet outPacket;
 	//SEND
-
-	std::cout << "Debug Action/Content " << action << " " << content << std::endl;
 	if (action == "HELLO")
 	{
-		//con->id = clients.size();
-		outPacket << "CH_SYN" << con->name;
-		sock->send(outPacket, con->ip, con->port);
-
+		Send(con, sock, "CH_SYN");
 	}
 
 	else if (action == "CH_ACK" && content == con->name)
@@ -113,22 +105,25 @@ void Servidor::StartServer()
 
 	while (true) {
 		// Logic for receiving
-		socket.receive(inPacket, remoteIP, remotePort);
+		if (socket.receive(inPacket, remoteIP, remotePort) != socket.Done) 
+		{
+			std::cout << "Receive Error: " << socket.Error << std::endl;
+		}
 
 		//Paquete << Accion << Contenido
 		inPacket >> action >> content;
+		std::cout << "Receive: " << action << " " << content << " " << remotePort << std::endl;
 
 		//std::cout << action << " " << content << " " << remotePort << std::endl;
 
 		if (action == "HELLO")
 		{
-			std::cout << "ENTRO" << std::endl;
 			//Saving client config
-
 			con.name = content;
 			con.port = remotePort;
 			con.ip = remoteIP;
-			Hello(&con, &socket, &inPacket);
+			std::cout << con.name << " " << con.port << " " << con.ip << std::endl;
+			Hello(&con, &socket);
 		}
 		else if (action == "MSG")
 		{
@@ -140,8 +135,8 @@ void Servidor::StartServer()
 		}
 		else if (action == "CH_ACK")
 		{
-			Hello(&con, &socket, &inPacket);
-			pongTimer.init(timeTillPingPong);
+			Hello(&con, &socket);
+			//pingPong.init(timeTillPingPong);
 		}
 		else if (action == "CREATE") {
 			std::cout << "creating game..." << std::endl;
@@ -160,30 +155,18 @@ void Servidor::StartServer()
 		}
 		else if (action == "JOINED") {
 			std::cout << "joining game..." << std::endl;
-			std::cout << games.size() << std::endl;
-			if (games.size() % 2 != 0 || games.size() == 0) // Moverlo a una funcion de create o copiar lo que esta en CREATE
+			if (games.size() % 2 == 0 || games.size() == 0) 
 			{
-				//for (int j = 0; j < clients.size(); j++)
-				//{
-				//	if (clients[j].port == remotePort)
-				//	{
-				//		std::cout << "Hola juancarlos" << std::endl;
-				//		hasCreatedGame[j] = true;
-				//		Send(&clients[j], &socket, "NO_GAME");
-				//		//gc.isFirstGame = true;
-				//	}
-				//}
+				// Moverlo a una funcion de create o copiar lo que esta en CREATE
 			}
-			else
-			{
-				Client closestClient = GetClosestClient(remotePort);
-				int gameId = clientToGames[closestClient.name];
-				clientToGames[content] = gameId; // Content = client.name(El que pide el join)
-				Send(&GetClientFromName(content), &socket, "JOIN_ACK");
-			}
+			int indexClosestClient = GetClosestClient(remotePort);
+			int gameId = clientToGames[clients[indexClosestClient].name];
+			clientToGames[con.name] = gameId; // Content = client.name(El que pide el join)
+			Client ClientName = GetClientFromName(con.name);
+			Send(&ClientName, &socket, "JOIN_ACK");
 			inPacket.clear();
 		}
-
+		
 		else if (action == "EXIT_CL")
 		{
 			for (int i = 0; i < clients.size(); i++)
@@ -202,7 +185,7 @@ void Servidor::StartServer()
 			//Comunicar a los otros clientes el movimiento del jugador
 		}
 
-		if (pongTimer.temp < 0)
+		/*if (pingPong.temp < 0)
 		{
 			std::cout << "EMPIEZA EL PING" << std::endl;
 			for (int i = 0; i < clients.size(); i++)
@@ -213,7 +196,7 @@ void Servidor::StartServer()
 					{
 						if (pongCounter >= 5)
 						{
-							pongTimer.temp = timeTillPingPong;
+							pingPong.temp = timeTillPingPong;
 							std::cout << "Termina el PING" << std::endl;
 						}
 						pongCounter++;
@@ -224,11 +207,10 @@ void Servidor::StartServer()
 		}
 		else
 		{
-			pongTimer.update();
-			std::cout << pongTimer.temp << std::endl;
-		}
+			pingPong.update();
+			std::cout << "Tiempo restante (PING): "<< pingPong.temp << std::endl;
+		}*/
 
-		std::cout << sendMessage << std::endl;
 
 		if (sendMessage.size() > 0)
 		{

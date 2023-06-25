@@ -33,12 +33,12 @@ class Servidor
 	bool create = true;
 	std::vector<bool> hasCreatedGame;
 	std::vector<Timer> clientsTime;
-	Timer pongTimer;
+	Timer pingPong;
 	float timeTillPingPong = 10;
 	int pongCounter;
 	std::map<std::string, int>clientToGames;
 	int nextGameId = 0;
-	Client GetClosestClient(unsigned short remotePort);
+	int GetClosestClient(unsigned short remotePort);
 	Client GetClientFromName(std::string name);
 	
 public:
@@ -46,7 +46,7 @@ public:
 	int clientID;
 
 	void GetLineFromCin_t(std::string* mssg, bool* exit);
-	void Hello(Client* con, sf::UdpSocket* sock, sf::Packet* inPacket);
+	void Hello(Client* con, sf::UdpSocket* sock);
 	void StartServer();
 	void Ping(Client* con, sf::UdpSocket* sock);
 	void Send(Client* con, sf::UdpSocket* sock, std::string message);

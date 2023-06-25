@@ -178,7 +178,7 @@ void Game::ChallengeSetUp()
 void Game::RunConnections()
 {
 	//ClientSetUp();
-	while (window.pollEvent(event))
+	if (window.pollEvent(event))
 	{
 		switch (event.type)
 		{

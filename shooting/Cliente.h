@@ -18,17 +18,20 @@ class Cliente
 	std::string action, content;
 	Timer timer;
 	bool check = false;
-	Game game;
 	bool noGame = false;
 	int packetCounter = 0;
 
-public:
-	Cliente();
+	unsigned short serverPort = 5000;
+	sf::IpAddress serverIp = "127.0.0.1";
+
 	Game gc;
 	std::string name;
 	sf::IpAddress ip;
 	unsigned short port = 5000;
 	int clientID = -1;
+
+public:
+	Cliente() = default;
 
 	void GetLineFromCin_t(std::string* mssg, bool* exit);
 	void HelloClient(sf::UdpSocket* sock, sf::Packet* inPacket);
@@ -37,5 +40,7 @@ public:
 	void GameSelected(sf::UdpSocket* sock);
 	void CreateGame();
 	void JoinGame(std::vector<Game> games);
+	void RecieveMessage(sf::UdpSocket* sock, std::string *actionMssg, std::string *contentMssg);
+	void printSomething();
 };
 
