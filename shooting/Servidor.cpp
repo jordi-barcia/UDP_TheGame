@@ -1,5 +1,7 @@
 #include "Servidor.h"
 
+
+
 int Servidor::GetClosestClient(unsigned short remotePort) {
 	int nameChar, diff, minDiff = INT_MAX;
 	int closestClient = -1;
@@ -30,7 +32,7 @@ Servidor::Client Servidor::GetClientFromName(std::string name)
 {
 	for (int i = 0; i < clients.size(); i++)
 	{
-		if (clients[i].name == name) 
+		if (clients[i].name == name)
 		{
 			return clients[i];
 		}
@@ -42,6 +44,20 @@ void Servidor::GetLineFromCin_t(std::string* mssg, bool* exit) {
 		std::string line;
 		std::getline(std::cin, line);
 		mssg->assign(line);
+
+		if (line.size() > 0)
+		{
+			if (line == "exit")
+			{
+				std::cout << "DISCONNECTED" << std::endl;
+				for (int i = 0; i < clients.size(); i++)
+				{
+					Send(&clients[i], &socket, "EXIT");
+				}
+				clients.erase(clients.begin(), clients.begin() + clients.size());
+				*exit = false;
+			}
+		}
 	}
 }
 
@@ -78,6 +94,40 @@ void Servidor::Hello(Client* con, sf::UdpSocket* sock)
 	}
 }
 
+void Receive(sf::UdpSocket* socket, sf::Packet* inPacket, unsigned short* remotePort, sf::IpAddress* remoteIp, std::string* action, std::string* content)
+{
+	while (true)
+	{
+		if (socket->receive(*inPacket, *remoteIp, *remotePort) != socket->Done)
+		{
+			std::cout << "Receive Error: " << socket->Error << std::endl;
+		}
+		*inPacket >> *action >> *content;
+		std::this_thread::sleep_for(std::chrono::milliseconds(100));
+	}
+}
+
+//void Servidor::Ping(std::atomic_bool* stopThread)
+//{
+//	std::cout << "Ping Thread ID: " << std::this_thread::get_id() << std::endl;
+//	auto startTime = std::chrono::steady_clock::now();
+//	auto duration = std::chrono::steady_clock::now() - startTime;
+//	while (std::chrono::duration_cast<std::chrono::milliseconds>(duration).count() < 10000)
+//	{
+//		duration = std::chrono::steady_clock::now() - startTime;
+//		std::cout << "Ping Duration: " << std::chrono::duration_cast<std::chrono::milliseconds>(duration).count() << std::endl;
+//		if (stopThread)
+//		{
+//			return;
+//		}
+//	}
+//
+//	std::cout << "Ping Duration Out Bucle: " << std::chrono::duration_cast<std::chrono::milliseconds>(duration).count() << std::endl;
+//	Send(&con, &socket, "PING");
+//}
+
+std::thread timer;
+
 void Servidor::StartServer()
 {
 	// Aplication init
@@ -96,135 +146,114 @@ void Servidor::StartServer()
 	// Application loop
 	sf::IpAddress remoteIP;
 	unsigned short remotePort;
-	//Client con;
+	
+	//Time
+	auto startTime = std::chrono::steady_clock::now();
+	auto duration = std::chrono::steady_clock::now() - startTime;
+	int pingCounter = -1;
 
 	//Threads
+	std::atomic_bool stopThreadTimer;
 	std::thread read_console_t(&Servidor::GetLineFromCin_t, this, &sendMessage, &exit);
 	read_console_t.detach();
+	std::thread receiveFromClients(Receive, &socket, &inPacket, &remotePort, &remoteIP, &action, &content);
+	receiveFromClients.detach();
 
 
-	while (true) {
+	while (exit) {
 		// Logic for receiving
-		if (socket.receive(inPacket, remoteIP, remotePort) != socket.Done) 
-		{
-			std::cout << "Receive Error: " << socket.Error << std::endl;
-		}
-
 		//Paquete << Accion << Contenido
-		inPacket >> action >> content;
-		std::cout << "Receive: " << action << " " << content << " " << remotePort << std::endl;
+		if (inPacket.getDataSize() > 0)
+		{
+			std::cout << "Data size: " << inPacket.getDataSize() << std::endl;
+			std::cout << "Receive: " << action << " " << content << " " << remotePort << std::endl;
+			
+			startTime = std::chrono::steady_clock::now();
+			pingCounter = -1;
+			
+			//std::cout << action << " " << content << " " << remotePort << std::endl;
 
-		//std::cout << action << " " << content << " " << remotePort << std::endl;
-
-		if (action == "HELLO")
-		{
-			//Saving client config
-			con.name = content;
-			con.port = remotePort;
-			con.ip = remoteIP;
-			std::cout << con.name << " " << con.port << " " << con.ip << std::endl;
-			Hello(&con, &socket);
-		}
-		else if (action == "MSG")
-		{
-
-		}
-		else if (action == "CH_SYN")
-		{
-			//Aqui se tiene que tratar, Conexion con otros servidores
-		}
-		else if (action == "CH_ACK")
-		{
-			Hello(&con, &socket);
-			//pingPong.init(timeTillPingPong);
-		}
-		else if (action == "CREATE") {
-			std::cout << "creating game..." << std::endl;
-			for (int j = 0; j < clients.size(); j++)
+			if (action == "HELLO")
 			{
-				if (clients[j].port == remotePort)
-				{
-					hasCreatedGame[j] = true;
-					games[nextGameId] = Game();
-					clientToGames[clients[j].name] = nextGameId;
-					nextGameId++;
-					std::cout << "Numero de Games creados: " + games.size() << std::endl;
-				}
+				//Saving client config
+				con.name = content;
+				con.port = remotePort;
+				con.ip = remoteIP;
+				std::cout << con.name << " " << con.port << " " << con.ip << std::endl;
+				Hello(&con, &socket);
 			}
-			inPacket.clear();
-		}
-		else if (action == "JOINED") {
-			std::cout << "joining game..." << std::endl;
-			if (games.size() % 2 == 0 || games.size() == 0) 
+			else if (action == "CH_ACK")
 			{
-				// Moverlo a una funcion de create o copiar lo que esta en CREATE
+				Hello(&con, &socket);
+				//EMPEZAR PROCESO DE PING PONG
+				
 			}
-			int indexClosestClient = GetClosestClient(remotePort);
-			int gameId = clientToGames[clients[indexClosestClient].name];
-			clientToGames[con.name] = gameId; // Content = client.name(El que pide el join)
-			Client ClientName = GetClientFromName(con.name);
-			Send(&ClientName, &socket, "JOIN_ACK");
-			inPacket.clear();
-		}
-		
-		else if (action == "EXIT_CL")
-		{
-			for (int i = 0; i < clients.size(); i++)
-			{
-				if (clients[i].port == remotePort)
+			else if (action == "CREATE") {
+				std::cout << "creating game..." << std::endl;
+				for (int j = 0; j < clients.size(); j++)
 				{
-					std::cout << "DISCONNECTED: " << clients[i].name + " " << clients[i].port << std::endl;
-					clients.erase(clients.begin() + i);
-				}
-			}
-		}
-
-		else if (action == "MOV")
-		{
-			//Validar movimiento
-			//Comunicar a los otros clientes el movimiento del jugador
-		}
-
-		/*if (pingPong.temp < 0)
-		{
-			std::cout << "EMPIEZA EL PING" << std::endl;
-			for (int i = 0; i < clients.size(); i++)
-			{
-				if (clients[i].port == remotePort)
-				{
-					if (action == "PONG")
+					if (clients[j].port == remotePort)
 					{
-						if (pongCounter >= 5)
-						{
-							pingPong.temp = timeTillPingPong;
-							std::cout << "Termina el PING" << std::endl;
-						}
-						pongCounter++;
+						hasCreatedGame[j] = true;
+						games[nextGameId] = Game();
+						clientToGames[clients[j].name] = nextGameId;
+						nextGameId++;
+						std::cout << "Numero de Games creados: " << games.size() << std::endl;
 					}
-					Ping(&clients[i], &socket);
+				}
+				inPacket.clear();
+			}
+			else if (action == "JOINED") {
+				std::cout << "joining game..." << std::endl;
+				if (games.size() % 2 == 0 || games.size() == 0)
+				{
+					// Moverlo a una funcion de create o copiar lo que esta en CREATE
+				}
+				int indexClosestClient = GetClosestClient(remotePort);
+				int gameId = clientToGames[clients[indexClosestClient].name];
+				clientToGames[con.name] = gameId; // Content = client.name(El que pide el join)
+				Client ClientName = GetClientFromName(con.name);
+				Send(&ClientName, &socket, "JOIN_ACK");
+				inPacket.clear();
+			}
+
+			else if (action == "EXIT_CL")
+			{
+				for (int i = 0; i < clients.size(); i++)
+				{
+					if (clients[i].port == remotePort)
+					{
+						std::cout << "DISCONNECTED: " << clients[i].name + " " << clients[i].port << std::endl;
+						clients.erase(clients.begin() + i);
+					}
 				}
 			}
+
+			else if (action == "MOV")
+			{
+				//Validar movimiento
+				//Comunicar a los otros clientes el movimiento del jugador
+			}
+
+			inPacket.clear();
 		}
 		else
 		{
-			pingPong.update();
-			std::cout << "Tiempo restante (PING): "<< pingPong.temp << std::endl;
-		}*/
-
-
-		if (sendMessage.size() > 0)
-		{
-			if (sendMessage == "exit")
+			std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(duration).count() << std::endl;
+			duration = std::chrono::steady_clock::now() - startTime;
+			if (std::chrono::duration_cast<std::chrono::milliseconds>(duration).count() >= 10000)
 			{
-				std::cout << "DISCONNECTED" << std::endl;
-				for (int i = 0; i < clients.size(); i++)
-				{
-					Send(&clients[i], &socket, "EXIT");
-				}
-				clients.erase(clients.begin(), clients.begin() + clients.size());
-				exit = false;
-				break;
+				Send(&con, &socket, "PING");
+				startTime = std::chrono::steady_clock::now();
+				pingCounter++;
+			}
+			else if (std::chrono::duration_cast<std::chrono::milliseconds>(duration).count() >= 2000 && pingCounter <= 4 && pingCounter >= 0)
+			{
+				Send(&con, &socket, "PING");
+				startTime = std::chrono::steady_clock::now();
+				pingCounter++;
 			}
 		}
+
 	}
 }

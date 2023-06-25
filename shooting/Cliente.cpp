@@ -66,7 +66,8 @@ void Cliente::ClientMain()
 	//Threads
 	std::thread read_console_t(&Cliente::GetLineFromCin_t, this, &action, &exit);
 	read_console_t.detach();
-
+	std::thread receive(&Cliente::RecieveMessage, this, &socket, &action, &content);
+	receive.detach();
 	//std::thread printScreen(&Cliente::printSomething, this);
 	//printScreen.detach();
 
@@ -74,9 +75,6 @@ void Cliente::ClientMain()
 
 	gc.ClientSetup();
 	while (true) {
-		
-		std::thread receive(&Cliente::RecieveMessage, this, &socket, &action, &content);
-		receive.detach();
 
 		if (gc.chooseGame && !hasHello)
 		{
@@ -92,6 +90,7 @@ void Cliente::ClientMain()
 		if (action == "JOIN_ACK")
 		{
 			std::cout << "JOINED GAME" << std::endl;
+			action = "";
 		}
 
 		/*if (action == "PING") {
@@ -170,13 +169,14 @@ void Cliente::JoinGame(std::vector<Game> games)
 
 void Cliente::RecieveMessage(sf::UdpSocket* sock, std::string* actionMssg, std::string* contentMssg)
 {
-	//while (true)
-	//{
-	sf::Packet inPacket;
-	sock->receive(inPacket, serverIp, serverPort);
-	inPacket >> *actionMssg >> *contentMssg;
-	std::cout << "Receive: " + *actionMssg << " " + *contentMssg << std::endl;
-	//}
+	while (true)
+	{
+		sf::Packet inPacket;
+		sock->receive(inPacket, serverIp, serverPort);
+		inPacket >> *actionMssg >> *contentMssg;
+		std::cout << "Receive: " + *actionMssg << " " + *contentMssg << std::endl;
+		std::this_thread::sleep_for(std::chrono::milliseconds(100));
+	}
 }
 
 void Cliente::printSomething()
