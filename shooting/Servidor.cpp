@@ -71,6 +71,7 @@ void Servidor::CriticalSend(Client* con, sf::UdpSocket* sock, std::string messag
 	sf::Packet outPacket;
 	outPacket << message << con->name << packetID;
 	sock->send(outPacket, con->ip, con->port);
+	SavePacketContent(packetID++, message, con->name);
 	std::cout << "Critical Sending: " << message << " " << con->name << " " << packetID << std::endl;
 }
 
@@ -115,6 +116,12 @@ void Servidor::Hello(Client* con, sf::UdpSocket* sock)
 		std::cout << "CONNECTED" << std::endl;
 
 		clients.push_back(*con);
+		
+		for (int i = 0; i < NoConnectedClients.size(); i++)
+		{
+			NoConnectedClients.erase(NoConnectedClients.begin() + i);
+		}
+		
 		create = false;
 		hasCreatedGame.push_back(create);
 
@@ -178,9 +185,32 @@ void Servidor::PacketChecker() {
 							std::cout << "Erased Packet: " << action << std::endl;
 							packets.erase(packets.begin() + i);
 							timersCritic.erase(timersCritic.begin() + i);
-
 						}
 						else {
+							CriticalSend(&con, &socket, action, pack.packetID);
+							timersCritic[i].init(.5f);
+						}
+					}
+				}
+			}
+		}
+
+		for (int j = 0; j < NoConnectedClients.size(); j++)
+		{
+			for (int i = 0; i < packets.size(); i++)
+			{
+				if (packets.size() > 0)
+				{
+					timersCritic[i].update();
+					if (NoConnectedClients[j].name == packets[i].clientName)
+					{
+						if (packetID == packets[i].packetID)
+						{
+							std::cout << "Erased Packet: " << action << std::endl;
+							packets.erase(packets.begin() + i);
+							timersCritic.erase(timersCritic.begin() + i);
+						}
+						else if(timersCritic[i].temp <= 0){
 							CriticalSend(&con, &socket, action, pack.packetID);
 							timersCritic[i].init(.5f);
 						}
@@ -192,7 +222,7 @@ void Servidor::PacketChecker() {
 }
 
 
-void Servidor::SafePacketContent(int pId, std::string action, std::string cName) 
+void Servidor::SavePacketContent(int pId, std::string action, std::string cName) 
 {
 	pack.packetID = pId;
 	pack.action = action;
@@ -285,21 +315,19 @@ void Servidor::StartServer()
 				}
 			}
 
-
 			if (action == "HELLO")
 			{
 				//Saving client config
 				con.name = content;
 				con.port = remotePort;
 				con.ip = remoteIP;
+				NoConnectedClients.push_back(con);
 				std::cout << con.name << " " << con.port << " " << con.ip << std::endl;
-				SafePacketContent(packetID++, con.name, action);
 				Hello(&con, &socket);
 			}
 			else if (action == "CH_ACK")
 			{
 				Hello(&con, &socket);
-				SafePacketContent(packetID++, con.name, action);
 				//EMPEZAR PROCESO DE PING PONG
 			}
 			else if (action == "CREATE") {
@@ -364,8 +392,6 @@ void Servidor::StartServer()
 				//Validar movimiento
 				//Comunicar a los otros clientes el movimiento del jugador
 			}
-
-			inPacket.clear();
 		}
 		else
 		{

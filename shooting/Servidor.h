@@ -46,7 +46,7 @@ class Servidor
 
 	void CriticalReceive(sf::UdpSocket* socket, sf::Packet* inPacket, unsigned short* remotePort, sf::IpAddress* remoteIp, std::string* action, std::string* content, int* packetID);
 	void CriticalSend(Client* con, sf::UdpSocket* sock, std::string message, int packetID);
-	void SafePacketContent(int pId, std::string action, std::string cName);
+	void SavePacketContent(int pId, std::string action, std::string cName);
 	Packet pack;
 	std::vector<Packet> packets;
 
@@ -62,6 +62,8 @@ class Servidor
 	
 public:
 	std::vector<Client> clients;
+	std::vector<Client> NoConnectedClients;
+
 	int clientID;
 
 	void ShutdownServer(std::string* mssg, bool* exit);
