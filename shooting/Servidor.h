@@ -24,6 +24,7 @@ class Servidor
 	};
 
 	std::string action, content;
+	int packetID;
 	std::map<int,Game>games; // Mapa de juegos
 	sf::UdpSocket socket;
 	Client con;
@@ -34,7 +35,10 @@ class Servidor
 	int GetClosestClient(unsigned short remotePort);
 	Client GetClientFromName(std::string name);
 	//void Ping(std::atomic_bool* stopThread);
-	
+
+	void CriticalReceive(sf::UdpSocket* socket, sf::Packet* inPacket, unsigned short* remotePort, sf::IpAddress* remoteIp, std::string* action, std::string* content, int* packetID);
+	void CriticalSend(Client* con, sf::UdpSocket* sock, std::string message, int packetID);
+
 	//Timer
 	Timer timer;
 	std::vector<Timer> timers; // Timer para gestionar la desconexion de cada uno de los clientes. 

@@ -35,6 +35,8 @@ Servidor::Client Servidor::GetClientFromName(std::string name)
 	}
 }
 
+
+
 void Servidor::ShutdownServer(std::string* mssg, bool* exit) {
 	while (*exit) {
 		std::string line;
@@ -64,6 +66,14 @@ void Servidor::Send(Client* con, sf::UdpSocket* sock, std::string message)
 	outPacket << message << con->name;
 	sock->send(outPacket, con->ip, con->port);
 	std::cout << "Sending: " + message << " " + con->name << " " + con->port << std::endl;
+}
+
+void Servidor::CriticalSend(Client* con, sf::UdpSocket* sock, std::string message, int packetID)
+{
+	sf::Packet outPacket;
+	outPacket << message << con->name << packetID;
+	sock->send(outPacket, con->ip, con->port);
+	std::cout << "Critical Sending: " + message << "" << con->name << "" << packetID << std::endl;
 }
 
 void Servidor::PingPong()
@@ -99,7 +109,7 @@ void Servidor::Hello(Client* con, sf::UdpSocket* sock)
 	//SEND
 	if (action == "HELLO")
 	{
-		Send(con, sock, "CH_SYN");
+		CriticalSend(con, sock, "CH_SYN", packetID++);
 	}
 
 	else if (action == "CH_ACK" && content == con->name)
@@ -112,6 +122,20 @@ void Servidor::Hello(Client* con, sf::UdpSocket* sock)
 
 		timer.init(time);
 		timers.push_back(timer);
+	}
+}
+
+void Servidor::CriticalReceive(sf::UdpSocket* socket, sf::Packet* inPacket, unsigned short* remotePort, sf::IpAddress* remoteIp, std::string* action, std::string* content, int* packetID)
+{
+	while (true)
+	{
+		if (socket->receive(*inPacket, *remoteIp, *remotePort) != socket->Done)
+		{
+			std::cout << "Receive Error: " << socket->Error << std::endl;
+		}
+		*inPacket >> *action >> *content >> *packetID;
+		std::cout << "Critical Receive: " << action << "" << content << "" << packetID << std::endl;
+		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	}
 }
 
@@ -175,10 +199,13 @@ void Servidor::StartServer()
 
 	//Threads
 	std::atomic_bool stopThreadTimer;
+	
 	std::thread read_console_t(&Servidor::ShutdownServer, this, &sendMessage, &exit);
 	read_console_t.detach();
+	
 	std::thread receiveFromClients(Receive, &socket, &inPacket, &remotePort, &remoteIP, &action, &content);
 	receiveFromClients.detach();
+	
 
 	while (exit) {
 		// Logic for receiving
@@ -187,6 +214,7 @@ void Servidor::StartServer()
 		{
 			std::cout << "Data size: " << inPacket.getDataSize() << std::endl;
 			std::cout << "Receive: " << action << " " << content << " " << remotePort << std::endl;
+			
 			
 			startTime = std::chrono::steady_clock::now();
 			//std::cout << action << " " << content << " " << remotePort << std::endl;

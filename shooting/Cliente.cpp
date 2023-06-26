@@ -1,17 +1,42 @@
 #include "Cliente.h"
 
+void Cliente::DeleteCriticalPacket() 
+{
+	if (packets.size() > 0)
+	{
+		for (int i = 0; i < packets.size(); i++)
+		{
+			if (packetCounter == packets[i].packetID)
+			{
+				std::cout << "Erased Packet: " << action << std::endl;
+				packets.erase(packets.begin() + i);
+			}
+		}
+	}
+}
+
+void Cliente::SafePacketContent(int packetNumber) 
+{
+	pack.packetAction = action;
+	pack.clientName = gc.name;
+	pack.packetID = packetNumber;
+	packets.push_back(pack);
+}
+
 void Cliente::HelloClient(sf::UdpSocket* sock, sf::Packet* inPacket)
 {
 	//SEND
-	if (action == "CH_SYN")
+	if (action == "CH_SYN") // Programar reenvio de paquete CH_SYN;
 	{
-		SendPacket(sock, "CH_ACK", gc.name);
 		packetCounter++;
+		SendCritPacket(sock, "CH_ACK", gc.name, packetCounter);
+		SafePacketContent(packetCounter);
 	}
-	else
+	else // Programar reenvio de paquete HELLO
 	{
-		SendPacket(sock, "HELLO", gc.name);
 		packetCounter++;
+		SendCritPacket(sock, "HELLO", gc.name,packetCounter);
+		SafePacketContent(packetCounter++);		
 	}
 }
 
@@ -24,6 +49,17 @@ void Cliente::SendPacket(sf::UdpSocket* sock, std::string actionMssg, std::strin
 		std::cout << "Sending error: " << sock->Error << std::endl;
 	}
 	std::cout << "Sending: " + actionMssg << " " + contentMssg << std::endl;
+}
+
+void Cliente::SendCritPacket(sf::UdpSocket* sock, std::string actionMssg, std::string contentMssg, int packetID)
+{
+	sf::Packet outPacket;
+	outPacket << actionMssg << contentMssg << packetID;
+	if (sock->send(outPacket, "127.0.0.1", 5000) != sock->Done)
+	{
+		std::cout << "Sending error: " << sock->Error << std::endl;
+	}
+	std::cout << "Critical Sending: " + actionMssg << " " << contentMssg << packetID << std::endl;
 }
 
 void Cliente::ClientMain()
@@ -46,6 +82,13 @@ void Cliente::ClientMain()
 	//Threads
 	std::thread receive(&Cliente::RecieveMessage, this, &socket, &action, &content);
 	receive.detach();
+
+	std::thread criticalReceive(&Cliente::ReceiveCriticalPacket, this, &socket, &action, &content, &packetCounter);
+	criticalReceive.detach();
+
+
+	std::thread deleteConfirmedPackets(&Cliente::DeleteCriticalPacket, this);
+	deleteConfirmedPackets.detach();
 
 	bool hasHello = false;
 
@@ -80,6 +123,7 @@ void Cliente::ClientMain()
 			gc.isFirstGame = true;
 			std::this_thread::sleep_for(std::chrono::milliseconds(100));
 			SendPacket(&socket, "CREATE", content);
+			SafePacketContent(packetCounter++);
 			action = "";
 		}
 
@@ -109,21 +153,14 @@ void Cliente::GameSelected(sf::UdpSocket* sock)
 	if (gc.created) {
 		content = gc.name;
 		SendPacket(sock, "CREATE", content);
+		SafePacketContent(packetCounter++);
 		gc.created = false;
-		packetCounter++;
 	}
 	else if (gc.joined) {
 		content = gc.name;
 		SendPacket(sock, "JOINED", content);
+		SafePacketContent(packetCounter++);
 		gc.joined = false;
-		packetCounter++;
-	}
-	else if (noGame)
-	{
-		SendPacket(sock, "CREATE", content);
-		packetCounter++;
-		noGame = false;
-		gc.isFirstGame = true;
 	}
 }
 
@@ -136,6 +173,18 @@ void Cliente::RecieveMessage(sf::UdpSocket* sock, std::string* actionMssg, std::
 		sock->receive(inPacket, serverIp, serverPort);
 		inPacket >> *actionMssg >> *contentMssg;
 		std::cout << "Receive: " + *actionMssg << " " + *contentMssg << std::endl;
+		std::this_thread::sleep_for(std::chrono::milliseconds(100));
+	}
+}
+
+void Cliente::ReceiveCriticalPacket(sf::UdpSocket* sock, std::string* actionMssg, std::string* contentMssg, int* packetID) 
+{
+	while (true)
+	{
+		sf::Packet inPacket;
+		sock->receive(inPacket, serverIp, serverPort);
+		inPacket >> *actionMssg >> *contentMssg >> *packetID;
+		std::cout << "Critical Receive: " << *actionMssg << " " << *contentMssg << "" << packetID << std::endl;
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	}
 }

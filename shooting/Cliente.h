@@ -27,7 +27,6 @@ class Cliente
 		std::string clientName;
 		float ts;
 		std::string packetAction;
-		std::string packetContent;
 	};
 
 	unsigned short serverPort = 5000;
@@ -39,13 +38,15 @@ class Cliente
 	unsigned short port = 5000;
 	int clientID = -1;
 
+	Packet pack;
 	std::vector<Packet> packets;
 	
+	void DeleteCriticalPacket();
+	void SafePacketContent(int packetNumber);
+	void SendCritPacket(sf::UdpSocket* sock, std::string actionMssg, std::string contentMssg, int packetID);
 
 public:
 	Cliente() = default;
-
-	void GetLineFromCin_t(std::string* mssg, bool* exit);
 
 	void HelloClient(sf::UdpSocket* sock, sf::Packet* inPacket);
 	void SendPacket(sf::UdpSocket* sock, std::string actionMssg, std::string contentMssg);
@@ -54,6 +55,6 @@ public:
 	void CreateGame();
 	void JoinGame(std::vector<Game> games);
 	void RecieveMessage(sf::UdpSocket* sock, std::string *actionMssg, std::string *contentMssg);
-	void printSomething();
+	void ReceiveCriticalPacket(sf::UdpSocket* sock, std::string* actionMssg, std::string* contentMssg, int* packetID);
 };
 
