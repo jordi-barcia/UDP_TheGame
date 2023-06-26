@@ -21,12 +21,10 @@ class Cliente
 	bool noGame = false;
 	int packetCounter = 0;
 
-	struct Packet
-	{
-		int packetID = -1;
+	struct Packet {
+		int packetID;
+		std::string action;
 		std::string clientName;
-		float ts;
-		std::string packetAction;
 	};
 
 	unsigned short serverPort = 5000;
@@ -42,7 +40,7 @@ class Cliente
 	std::vector<Packet> packets;
 	
 	void DeleteCriticalPacket();
-	void SafePacketContent(int packetNumber);
+	void SafePacketContent(int pId, std::string action, std::string cName);
 	void SendCritPacket(sf::UdpSocket* sock, std::string actionMssg, std::string contentMssg, int packetID);
 
 public:

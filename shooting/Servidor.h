@@ -20,14 +20,22 @@ class Servidor
 		std::string solution; // Respuesta al challenge
 	};
 
+	Client con;
+
 	struct Game {
+	};
+
+	struct Packet{
+		int packetID;
+		std::string action;
+		std::string clientName;
 	};
 
 	std::string action, content;
 	int packetID;
 	std::map<int,Game>games; // Mapa de juegos
 	sf::UdpSocket socket;
-	Client con;
+	
 	bool create = true;
 	std::vector<bool> hasCreatedGame;
 	std::map<std::string, int>clientToGames;
@@ -38,13 +46,14 @@ class Servidor
 
 	void CriticalReceive(sf::UdpSocket* socket, sf::Packet* inPacket, unsigned short* remotePort, sf::IpAddress* remoteIp, std::string* action, std::string* content, int* packetID);
 	void CriticalSend(Client* con, sf::UdpSocket* sock, std::string message, int packetID);
+	void SafePacketContent(int pId, std::string action, std::string cName);
+	Packet pack;
 
 	//Timer
 	Timer timer;
 	std::vector<Timer> timers; // Timer para gestionar la desconexion de cada uno de los clientes. 
 	int time = 10;
 	int pings = 2;
-
 	int pingCounter = -1;
 	
 public:

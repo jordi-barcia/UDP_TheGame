@@ -15,11 +15,11 @@ void Cliente::DeleteCriticalPacket()
 	}
 }
 
-void Cliente::SafePacketContent(int packetNumber) 
+void Cliente::SafePacketContent(int pId, std::string action, std::string cName)
 {
-	pack.packetAction = action;
-	pack.clientName = gc.name;
-	pack.packetID = packetNumber;
+	pack.packetID = pId;
+	pack.action = action;
+	pack.clientName = cName;
 	packets.push_back(pack);
 }
 
@@ -29,16 +29,17 @@ void Cliente::HelloClient(sf::UdpSocket* sock, sf::Packet* inPacket)
 	if (action == "CH_SYN") // Programar reenvio de paquete CH_SYN;
 	{
 		packetCounter++;
+		SafePacketContent(packetCounter, action, gc.name);
 		SendCritPacket(sock, "CH_ACK", gc.name, packetCounter);
-		SafePacketContent(packetCounter);
 	}
 	else // Programar reenvio de paquete HELLO
 	{
 		packetCounter++;
+		SafePacketContent(packetCounter, action, gc.name);
 		SendCritPacket(sock, "HELLO", gc.name,packetCounter);
-		SafePacketContent(packetCounter++);		
 	}
 }
+
 
 void Cliente::SendPacket(sf::UdpSocket* sock, std::string actionMssg, std::string contentMssg)
 {
@@ -80,8 +81,8 @@ void Cliente::ClientMain()
 	unsigned short serverPort = 5000;
 
 	//Threads
-	std::thread receive(&Cliente::RecieveMessage, this, &socket, &action, &content);
-	receive.detach();
+	/*std::thread receive(&Cliente::RecieveMessage, this, &socket, &action, &content);
+	receive.detach();*/
 
 	std::thread criticalReceive(&Cliente::ReceiveCriticalPacket, this, &socket, &action, &content, &packetCounter);
 	criticalReceive.detach();
@@ -98,7 +99,7 @@ void Cliente::ClientMain()
 		if (gc.chooseGame && !hasHello)
 		{
 			HelloClient(&socket, &inPacket);
-
+			
 			if (action == "CH_SYN")
 			{
 				hasHello = true;
@@ -123,7 +124,7 @@ void Cliente::ClientMain()
 			gc.isFirstGame = true;
 			std::this_thread::sleep_for(std::chrono::milliseconds(100));
 			SendPacket(&socket, "CREATE", content);
-			SafePacketContent(packetCounter++);
+			SafePacketContent(packetCounter++, action, gc.name);
 			action = "";
 		}
 
@@ -153,13 +154,13 @@ void Cliente::GameSelected(sf::UdpSocket* sock)
 	if (gc.created) {
 		content = gc.name;
 		SendPacket(sock, "CREATE", content);
-		SafePacketContent(packetCounter++);
+		SafePacketContent(packetCounter++, action, gc.name);
 		gc.created = false;
 	}
 	else if (gc.joined) {
 		content = gc.name;
 		SendPacket(sock, "JOINED", content);
-		SafePacketContent(packetCounter++);
+		SafePacketContent(packetCounter++, action, gc.name);
 		gc.joined = false;
 	}
 }
@@ -184,7 +185,7 @@ void Cliente::ReceiveCriticalPacket(sf::UdpSocket* sock, std::string* actionMssg
 		sf::Packet inPacket;
 		sock->receive(inPacket, serverIp, serverPort);
 		inPacket >> *actionMssg >> *contentMssg >> *packetID;
-		std::cout << "Critical Receive: " << *actionMssg << " " << *contentMssg << "" << packetID << std::endl;
+		std::cout << "Critical Receive: " << *actionMssg << " " << *contentMssg << " " << *packetID << std::endl;
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	}
 }

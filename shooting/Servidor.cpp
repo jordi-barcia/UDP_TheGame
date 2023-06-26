@@ -35,8 +35,6 @@ Servidor::Client Servidor::GetClientFromName(std::string name)
 	}
 }
 
-
-
 void Servidor::ShutdownServer(std::string* mssg, bool* exit) {
 	while (*exit) {
 		std::string line;
@@ -73,7 +71,7 @@ void Servidor::CriticalSend(Client* con, sf::UdpSocket* sock, std::string messag
 	sf::Packet outPacket;
 	outPacket << message << con->name << packetID;
 	sock->send(outPacket, con->ip, con->port);
-	std::cout << "Critical Sending: " + message << "" << con->name << "" << packetID << std::endl;
+	std::cout << "Critical Sending: " << message << " " << con->name << " " << packetID << std::endl;
 }
 
 void Servidor::PingPong()
@@ -109,7 +107,7 @@ void Servidor::Hello(Client* con, sf::UdpSocket* sock)
 	//SEND
 	if (action == "HELLO")
 	{
-		CriticalSend(con, sock, "CH_SYN", packetID++);
+		CriticalSend(con, sock, "CH_SYN", pack.packetID);
 	}
 
 	else if (action == "CH_ACK" && content == con->name)
@@ -134,7 +132,7 @@ void Servidor::CriticalReceive(sf::UdpSocket* socket, sf::Packet* inPacket, unsi
 			std::cout << "Receive Error: " << socket->Error << std::endl;
 		}
 		*inPacket >> *action >> *content >> *packetID;
-		std::cout << "Critical Receive: " << action << "" << content << "" << packetID << std::endl;
+		std::cout << "Critical Receive: " << *action << " " << *content << " " << *packetID << std::endl;
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	}
 }
@@ -150,6 +148,13 @@ void Receive(sf::UdpSocket* socket, sf::Packet* inPacket, unsigned short* remote
 		*inPacket >> *action >> *content;
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	}
+}
+
+void Servidor::SafePacketContent(int pId, std::string action, std::string cName) 
+{
+	pack.packetID = pId;
+	pack.action = action;
+	pack.clientName = cName;
 }
 
 //void Servidor::Ping(std::atomic_bool* stopThread)
@@ -203,17 +208,19 @@ void Servidor::StartServer()
 	std::thread read_console_t(&Servidor::ShutdownServer, this, &sendMessage, &exit);
 	read_console_t.detach();
 	
-	std::thread receiveFromClients(Receive, &socket, &inPacket, &remotePort, &remoteIP, &action, &content);
-	receiveFromClients.detach();
+	/*std::thread receiveFromClients(Receive, &socket, &inPacket, &remotePort, &remoteIP, &action, &content);
+	receiveFromClients.detach();*/
 	
+	std::thread criticalReceiveFromClients(&Servidor::CriticalReceive, this, &socket, &inPacket, &remotePort, &remoteIP, &action, &content, &packetID);
+	criticalReceiveFromClients.detach();
 
 	while (exit) {
 		// Logic for receiving
 		//Paquete << Accion << Contenido
 		if (inPacket.getDataSize() > 0)
 		{
-			std::cout << "Data size: " << inPacket.getDataSize() << std::endl;
-			std::cout << "Receive: " << action << " " << content << " " << remotePort << std::endl;
+			//std::cout << "Data size: " << inPacket.getDataSize() << std::endl;
+			//std::cout << "Receive: " << action << " " << content << " " << remotePort << std::endl;
 			
 			
 			startTime = std::chrono::steady_clock::now();
@@ -236,12 +243,13 @@ void Servidor::StartServer()
 				con.port = remotePort;
 				con.ip = remoteIP;
 				std::cout << con.name << " " << con.port << " " << con.ip << std::endl;
+				SafePacketContent(packetID++, con.name, action);
 				Hello(&con, &socket);
 			}
 			else if (action == "CH_ACK")
 			{
 				Hello(&con, &socket);
-				
+				SafePacketContent(packetID++, con.name, action);
 				//EMPEZAR PROCESO DE PING PONG
 			}
 			else if (action == "CREATE") {
