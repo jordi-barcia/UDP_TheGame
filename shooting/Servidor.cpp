@@ -86,8 +86,6 @@ void Servidor::PingPong()
 				else if (pingCounter >= 4)
 				{
 					action == "EXIT_CL";
-
-					timers.erase(timers.begin() + i);
 				}
 				//mtx.unlock();
 			}
@@ -254,6 +252,7 @@ void Servidor::StartServer()
 					{
 						std::cout << "DISCONNECTED: " << clients[i].name + " " << clients[i].port << std::endl;
 						clients.erase(clients.begin() + i);
+						timers.erase(timers.begin() + i);
 					}
 				}
 			}
