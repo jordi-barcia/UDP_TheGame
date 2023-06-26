@@ -236,12 +236,15 @@ void Servidor::StartServer()
 				if (games.size() % 2 == 0 || games.size() == 0)
 				{
 					// Moverlo a una funcion de create o copiar lo que esta en CREATE
+					Send(&con, &socket, "NO_GAME");
 				}
-				int indexClosestClient = GetClosestClient(remotePort);
-				int gameId = clientToGames[clients[indexClosestClient].name];
-				clientToGames[con.name] = gameId; // Content = client.name(El que pide el join)
-				Client ClientName = GetClientFromName(con.name);
-				Send(&ClientName, &socket, "JOIN_ACK");
+				else {
+					int indexClosestClient = GetClosestClient(remotePort);
+					int gameId = clientToGames[clients[indexClosestClient].name];
+					clientToGames[con.name] = gameId; // Content = client.name(El que pide el join)
+					Client ClientName = GetClientFromName(con.name);
+					Send(&ClientName, &socket, "JOIN_ACK");
+				}
 				inPacket.clear();
 			}
 			else if (action == "EXIT_CL")
@@ -253,6 +256,14 @@ void Servidor::StartServer()
 						std::cout << "DISCONNECTED: " << clients[i].name + " " << clients[i].port << std::endl;
 						clients.erase(clients.begin() + i);
 						timers.erase(timers.begin() + i);
+						if (games.size() != 0) {
+							if (i < games.size()) {
+								games.erase(i);
+							}
+							else {
+								games.erase(i - 1);
+							}
+						}
 					}
 				}
 			}

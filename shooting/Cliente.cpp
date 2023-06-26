@@ -73,12 +73,15 @@ void Cliente::ClientMain()
 			GameSelected(&socket);
 		}
 
-		/*if (action == "NO_GAME") //Para que el cliente le envie CREATE al server en el caso de que no haya games creados
+		if (action == "NO_GAME") //Para que el cliente le envie CREATE al server en el caso de que no haya games creados
 		{
-			noGame = true;
-			GameSelected(&socket);
+			//noGame = true;
+			//GameSelected(&socket);
+			gc.isFirstGame = true;
+			std::this_thread::sleep_for(std::chrono::milliseconds(100));
 			SendPacket(&socket, "CREATE", content);
-		}*/
+			action = "";
+		}
 
 		gc.updateGame();
 
@@ -120,6 +123,7 @@ void Cliente::GameSelected(sf::UdpSocket* sock)
 		SendPacket(sock, "CREATE", content);
 		packetCounter++;
 		noGame = false;
+		gc.isFirstGame = true;
 	}
 }
 

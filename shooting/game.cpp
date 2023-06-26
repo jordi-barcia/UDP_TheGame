@@ -171,7 +171,15 @@ void Game::updateGame()
 
 					if (chooseSetUp && nameText.getString() == "1")
 					{
-						if (isFirstGame)
+						if (!isFirstGame)
+						{
+							//Join Game
+							joined = true;
+							isP1 = false;
+							playing = true;
+							chooseSetUp = false;
+						}
+						else
 						{
 							//Create Game
 							created = true;
@@ -179,14 +187,6 @@ void Game::updateGame()
 							chooseSetUp = false;
 							isP1 = true;
 							isFirstGame = false;
-						}
-						else
-						{
-							//Join Game
-							joined = true;
-							isP1 = false;
-							playing = true;
-							chooseSetUp = false;
 						}
 					}
 
@@ -234,6 +234,11 @@ void Game::updateGame()
 	}
 	if (playing)
 	{
+		if (isFirstGame)
+		{
+			isP1 = true;
+			isFirstGame = false;
+		}
 		// When playing
 		if (isP1)
 		{
