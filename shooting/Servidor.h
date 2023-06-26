@@ -6,6 +6,7 @@
 #include <mutex>
 #include <functional>
 #include <map>
+#include "Timer.h"
 
 class Servidor
 {
@@ -34,6 +35,14 @@ class Servidor
 	Client GetClientFromName(std::string name);
 	//void Ping(std::atomic_bool* stopThread);
 	
+	//Timer
+	Timer timer;
+	std::vector<Timer> timers; // Timer para gestionar la desconexion de cada uno de los clientes. 
+	int time = 10;
+	int pings = 2;
+
+	int pingCounter = -1;
+	
 public:
 	std::vector<Client> clients;
 	int clientID;
@@ -42,5 +51,6 @@ public:
 	void Hello(Client* con, sf::UdpSocket* sock);
 	void StartServer();
 	void Send(Client* con, sf::UdpSocket* sock, std::string message);
+	void PingPong();
 };
 

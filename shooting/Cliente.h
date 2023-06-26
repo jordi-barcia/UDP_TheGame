@@ -45,6 +45,8 @@ class Cliente
 public:
 	Cliente() = default;
 
+	void GetLineFromCin_t(std::string* mssg, bool* exit);
+
 	void HelloClient(sf::UdpSocket* sock, sf::Packet* inPacket);
 	void SendPacket(sf::UdpSocket* sock, std::string actionMssg, std::string contentMssg);
 	void ClientMain();
