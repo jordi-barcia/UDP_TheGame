@@ -48,6 +48,7 @@ class Servidor
 	void CriticalSend(Client* con, sf::UdpSocket* sock, std::string message, int packetID);
 	void SafePacketContent(int pId, std::string action, std::string cName);
 	Packet pack;
+	std::vector<Packet> packets;
 
 	//Timer
 	Timer timer;
@@ -55,6 +56,9 @@ class Servidor
 	int time = 10;
 	int pings = 2;
 	int pingCounter = -1;
+
+
+	std::vector<Timer> timersCritic;
 	
 public:
 	std::vector<Client> clients;
@@ -65,5 +69,7 @@ public:
 	void StartServer();
 	void Send(Client* con, sf::UdpSocket* sock, std::string message);
 	void PingPong();
+	void PacketChecker();
+
 };
 

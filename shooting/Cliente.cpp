@@ -166,7 +166,7 @@ void Cliente::GameSelected(sf::UdpSocket* sock)
 }
 
 
-void Cliente::RecieveMessage(sf::UdpSocket* sock, std::string* actionMssg, std::string* contentMssg)
+/*void Cliente::RecieveMessage(sf::UdpSocket* sock, std::string* actionMssg, std::string* contentMssg)
 {
 	while (true)
 	{
@@ -176,7 +176,7 @@ void Cliente::RecieveMessage(sf::UdpSocket* sock, std::string* actionMssg, std::
 		std::cout << "Receive: " + *actionMssg << " " + *contentMssg << std::endl;
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	}
-}
+}*/
 
 void Cliente::ReceiveCriticalPacket(sf::UdpSocket* sock, std::string* actionMssg, std::string* contentMssg, int* packetID) 
 {
@@ -185,7 +185,15 @@ void Cliente::ReceiveCriticalPacket(sf::UdpSocket* sock, std::string* actionMssg
 		sf::Packet inPacket;
 		sock->receive(inPacket, serverIp, serverPort);
 		inPacket >> *actionMssg >> *contentMssg >> *packetID;
-		std::cout << "Critical Receive: " << *actionMssg << " " << *contentMssg << " " << *packetID << std::endl;
+
+		if (*actionMssg == "PING")
+		{
+			std::cout << "Receive: " << *actionMssg << " " << *contentMssg << " " << std::endl;
+		}
+		else {
+			std::cout << "Critical Receive: " << *actionMssg << " " << *contentMssg << " " << *packetID << std::endl;
+		}
+
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	}
 }

@@ -132,29 +132,74 @@ void Servidor::CriticalReceive(sf::UdpSocket* socket, sf::Packet* inPacket, unsi
 			std::cout << "Receive Error: " << socket->Error << std::endl;
 		}
 		*inPacket >> *action >> *content >> *packetID;
-		std::cout << "Critical Receive: " << *action << " " << *content << " " << *packetID << std::endl;
+		if (*action == "PONG")
+		{
+			std::cout << "Receive: " << *action << " " << *content << " " << std::endl;
+		}
+		else {
+			std::cout << "Critical Receive: " << *action << " " << *content << " " << *packetID << std::endl;
+		}
+
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	}
 }
 
-void Receive(sf::UdpSocket* socket, sf::Packet* inPacket, unsigned short* remotePort, sf::IpAddress* remoteIp, std::string* action, std::string* content)
-{
+//void Receive(sf::UdpSocket* socket, sf::Packet* inPacket, unsigned short* remotePort, sf::IpAddress* remoteIp, std::string* action, std::string* content)
+//{
+//	while (true)
+//	{
+//		if (socket->receive(*inPacket, *remoteIp, *remotePort) != socket->Done)
+//		{
+//			std::cout << "Receive Error: " << socket->Error << std::endl;
+//		}
+//		*inPacket >> *action >> *content;
+//		std::this_thread::sleep_for(std::chrono::milliseconds(100));
+//	}
+//}
+
+
+void Servidor::PacketChecker() {
+	
 	while (true)
 	{
-		if (socket->receive(*inPacket, *remoteIp, *remotePort) != socket->Done)
+		//std::cout << "Revisando tabla de paquetes" << std::endl;
+
+		for (int j = 0; j < clients.size(); j++)
 		{
-			std::cout << "Receive Error: " << socket->Error << std::endl;
+			for (int i = 0; i < packets.size(); i++)
+			{
+				if (packets.size() > 0)
+				{
+					timersCritic[i].update();
+					if (clients[j].name == packets[i].clientName)
+					{
+						if (packetID == packets[i].packetID)
+						{
+							std::cout << "Erased Packet: " << action << std::endl;
+							packets.erase(packets.begin() + i);
+							timersCritic.erase(timersCritic.begin() + i);
+
+						}
+						else {
+							CriticalSend(&con, &socket, action, pack.packetID);
+							timersCritic[i].init(.5f);
+						}
+					}
+				}
+			}
 		}
-		*inPacket >> *action >> *content;
-		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	}
 }
+
 
 void Servidor::SafePacketContent(int pId, std::string action, std::string cName) 
 {
 	pack.packetID = pId;
 	pack.action = action;
 	pack.clientName = cName;
+	packets.push_back(pack);
+	timer.init(.5f);
+	timersCritic.push_back(timer);
 }
 
 //void Servidor::Ping(std::atomic_bool* stopThread)
@@ -213,6 +258,11 @@ void Servidor::StartServer()
 	
 	std::thread criticalReceiveFromClients(&Servidor::CriticalReceive, this, &socket, &inPacket, &remotePort, &remoteIP, &action, &content, &packetID);
 	criticalReceiveFromClients.detach();
+
+	std::thread packetCheckerThread(&Servidor::PacketChecker,this);
+	packetCheckerThread.detach();
+
+
 
 	while (exit) {
 		// Logic for receiving
