@@ -177,18 +177,21 @@ void Servidor::PacketChecker() {
 			{
 				if (packets.size() > 0)
 				{
-					timersCritic[i].update();
-					if (clients[j].name == packets[i].clientName)
+					if (timersCritic.size() > 0)
 					{
-						if (packetID == packets[i].packetID)
+						timersCritic[i].update();
+						if (clients[j].name == packets[i].clientName)
 						{
-							std::cout << "Erased Packet: " << action << std::endl;
-							packets.erase(packets.begin() + i);
-							timersCritic.erase(timersCritic.begin() + i);
-						}
-						else {
-							CriticalSend(&con, &socket, action, pack.packetID);
-							timersCritic[i].init(.5f);
+							if (packetID == packets[i].packetID)
+							{
+								std::cout << "Erased Packet: " << action << std::endl;
+								packets.erase(packets.begin() + i);
+								timersCritic.erase(timersCritic.begin() + i);
+							}
+							else {
+								CriticalSend(&con, &socket, action, pack.packetID);
+								timersCritic[i].init(.5f);
+							}
 						}
 					}
 				}
@@ -201,18 +204,21 @@ void Servidor::PacketChecker() {
 			{
 				if (packets.size() > 0)
 				{
-					timersCritic[i].update();
-					if (NoConnectedClients[j].name == packets[i].clientName)
+					if (timersCritic.size() > 0)
 					{
-						if (packetID == packets[i].packetID)
+						timersCritic[i].update();
+						if (NoConnectedClients[j].name == packets[i].clientName)
 						{
-							std::cout << "Erased Packet: " << action << std::endl;
-							packets.erase(packets.begin() + i);
-							timersCritic.erase(timersCritic.begin() + i);
-						}
-						else if(timersCritic[i].temp <= 0){
-							CriticalSend(&con, &socket, action, pack.packetID);
-							timersCritic[i].init(.5f);
+							if (packetID == packets[i].packetID)
+							{
+								std::cout << "Erased Packet: " << action << std::endl;
+								packets.erase(packets.begin() + i);
+								timersCritic.erase(timersCritic.begin() + i);
+							}
+							else if (timersCritic[i].temp <= 0) {
+								CriticalSend(&con, &socket, action, pack.packetID);
+								timersCritic[i].init(.5f);
+							}
 						}
 					}
 				}
