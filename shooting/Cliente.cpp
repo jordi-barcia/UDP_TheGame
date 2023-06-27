@@ -8,7 +8,7 @@ void Cliente::SavePacketContent(int pId, std::string action, std::string cName)
 	pack.clientName = cName;
 	packets.push_back(pack);
 
-	timer.init(.5f);
+	timer.init(0.5f);
 	timersCritic.push_back(timer);
 }
 
@@ -27,6 +27,7 @@ void Cliente::HelloClient(sf::UdpSocket* sock, sf::Packet* inPacket)
 		//packetCounter++;
 		SavePacketContent(packetCounter, "HELLO", gc.name);
 		SendCritPacket(sock, "HELLO", gc.name, packetCounter);
+		hasHello = true;
 		//std::this_thread::sleep_for(std::chrono::milliseconds(500));
 	}
 
@@ -71,6 +72,7 @@ void Cliente::ReceiveCriticalPacket(sf::UdpSocket* sock, std::string* actionMssg
 		else {
 
 			std::cout << "Critical Receive: " << *actionMssg << " " << *contentMssg << " " << *packetID << std::endl;
+			packIDreceived = *packetID;
 		}
 
 		std::this_thread::sleep_for(std::chrono::milliseconds(10));
@@ -107,13 +109,15 @@ void Cliente::ClientMain()
 	gc.ClientSetup();
 	while (true) {
 
-		if (gc.chooseGame && !hasHello)
+		if (gc.chooseGame)
 		{
 			if (action == "CH_SYN")
 			{
-				hasHello = true;
+				HelloClient(&socket, &inPacket);
 			}
-			HelloClient(&socket, &inPacket);
+			else if (!hasHello) {
+				HelloClient(&socket, &inPacket);
+			}
 		}
 
 		if (action == "JOIN_ACK")
@@ -136,7 +140,7 @@ void Cliente::ClientMain()
 		{
 			gc.isFirstGame = true;
 			std::this_thread::sleep_for(std::chrono::milliseconds(100));
-			packetCounter = 1;
+			packetCounter = 2;
 			SavePacketContent(packetCounter, "CREATE", gc.name);
 			SendCritPacket(&socket, "CREATE", content, packetCounter);
 			action = "";
@@ -167,14 +171,14 @@ void Cliente::GameSelected(sf::UdpSocket* sock)
 	//SEND
 	if (gc.created) {
 		content = gc.name;
-		packetCounter = 1;
+		packetCounter = 2;
 		SavePacketContent(packetCounter, "CREATE", gc.name);
 		SendCritPacket(sock, "CREATE", content, packetCounter);
 		gc.created = false;
 	}
 	else if (gc.joined) {
 		content = gc.name;
-		packetCounter = 1;
+		packetCounter = 2;
 		SavePacketContent(packetCounter, "JOINED", gc.name);
 		SendCritPacket(sock, "JOINED", content, packetCounter);
 		gc.joined = false;
@@ -193,7 +197,7 @@ void Cliente::PacketChecker(sf::UdpSocket* sock)
 				{
 					timersCritic[i].update();
 					//std::cout << IDpack << "." << packets[i].packetID << std::endl;
-					if (packetCounter == packets[i].packetID)
+					if (packIDreceived == packets[i].packetID)
 					{
 						std::cout << "Erased Packet: " << packets[i].action << std::endl;
 						packets.erase(packets.begin() + i);
@@ -202,9 +206,11 @@ void Cliente::PacketChecker(sf::UdpSocket* sock)
 					else if (timersCritic[i].temp <= 0) {
 						if (action != "PING")
 						{
+							std::cout << "REENVIO" << std::endl;
 							SendCritPacket(sock, packets[i].action, gc.name, packetCounter);
+							std::this_thread::sleep_for(std::chrono::milliseconds(500));
 						}
-						timersCritic[i].init(.5f);
+						timersCritic[i].init(0.5f);
 					}
 				}
 			}

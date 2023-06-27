@@ -143,9 +143,8 @@ void Servidor::RTTChanger()
 void Servidor::Hello(Client* con, sf::UdpSocket* sock)
 {
 	//SEND
-	if (action == "HELLO" && !hasHello)
+	if (action == "HELLO")
 	{
-		SavePacketContent(0, "CH_SYN", con->name);
 		CriticalSend(con, sock, "CH_SYN", 0);
 	}
 
@@ -186,7 +185,7 @@ void Servidor::CriticalReceive(sf::UdpSocket* socket, sf::Packet* inPacket, unsi
 		}
 		else {
 			std::cout << "Critical Receive: " << *action << " " << *content << " " << *packetID << std::endl;
-			IDpack = *packetID;
+			packIDreceived = *packetID;
 		}
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	}
@@ -243,7 +242,7 @@ void Servidor::PacketChecker() {
 							if (clients[j].name == packets[i].clientName)
 							{
 								//std::cout << IDpack << "." << packets[i].packetID << std::endl;
-								if (IDpack == packets[i].packetID)
+								if (packIDreceived == packets[i].packetID)
 								{
 									std::cout << "Erased Packet: " << packets[i].action << std::endl;
 									
@@ -254,11 +253,11 @@ void Servidor::PacketChecker() {
 									timersCritic.erase(timersCritic.begin() + i);
 								}
 								else if (timersCritic[i].temp <= 0) {
-									if (action != "HELLO" && action != "CH_ACK") {
-
+									if (action == "CREATE" || action == "JOINED") {
 										CriticalSend(&con, &socket, packets[i].action, pack.packetID);
+										std::this_thread::sleep_for(std::chrono::milliseconds(500));
 									}
-									timersCritic[i].init(.5f);
+									timersCritic[i].init(0.5f);
 								}
 							}
 						}
@@ -280,8 +279,8 @@ void Servidor::PacketChecker() {
 							rttxPacket += expected_frametime;
 							if (NoConnectedClients[j].name == packets[i].clientName)
 							{
-								//std::cout << IDpack << "." << packets[i].packetID << std::endl;
-								if (IDpack == packets[i].packetID)
+								//std::cout << action << std::endl;
+								if (packIDreceived == packets[i].packetID)
 								{
 									std::cout << "Erased Packet: " << packets[i].action << std::endl;
 								
@@ -292,13 +291,11 @@ void Servidor::PacketChecker() {
 									timersCritic.erase(timersCritic.begin() + i);
 								}
 								else if (timersCritic[i].temp <= 0) {
-									if (action != "HELLO" && action != "CH_ACK") {
-
-									}
-									else {
+									if (action != "CH_ACK") {
 										Hello(&con, &socket);
+										std::this_thread::sleep_for(std::chrono::milliseconds(500));
 									}
-									timersCritic[i].init(.5f);
+									timersCritic[i].init(0.5f);
 								}
 							}
 						}
@@ -315,7 +312,7 @@ void Servidor::SavePacketContent(int pId, std::string action, std::string cName)
 	pack.action = action;
 	pack.clientName = cName;
 	packets.push_back(pack);
-	timer.init(.5f);
+	timer.init(0.5f);
 	timersCritic.push_back(timer);
 }
 
@@ -399,8 +396,7 @@ void Servidor::StartServer()
 			
 			//startTime = std::chrono::steady_clock::now();
 			//std::cout << action << " " << content << " " << remotePort << std::endl;
-
-
+			
 			if (action == "HELLO" && !hasHello)
 			{
 				//Saving client config
@@ -409,6 +405,7 @@ void Servidor::StartServer()
 				con.ip = remoteIP;
 				NoConnectedClients.push_back(con);
 				std::cout << con.name << " " << con.port << " " << con.ip << std::endl;
+				SavePacketContent(1, "CH_SYN", con.name);
 				Hello(&con, &socket);
 				hasHello = true;
 			}
@@ -429,7 +426,7 @@ void Servidor::StartServer()
 						clientToGames[clients[j].name] = nextGameId;
 						nextGameId++;
 						std::cout << "Numero de Games creados: " << games.size() << std::endl;
-						IDpack = 1;
+						IDpack = 2;
 						SavePacketContent(IDpack, "CREATE_ACK", con.name);
 						CriticalSend(&con, &socket, "CREATE_ACK", IDpack);
 					}
@@ -448,7 +445,7 @@ void Servidor::StartServer()
 					int gameId = clientToGames[clients[indexClosestClient].name];
 					clientToGames[con.name] = gameId; // Content = client.name(El que pide el join)
 					Client ClientName = GetClientFromName(con.name);
-					IDpack = 1;
+					IDpack = 2;
 					SavePacketContent(IDpack, "JOIN_ACK", con.name);
 					CriticalSend(&ClientName, &socket, "JOIN_ACK", IDpack);
 				}

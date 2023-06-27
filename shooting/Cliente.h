@@ -39,6 +39,7 @@ class Cliente
 
 	Packet pack;
 	std::vector<Packet> packets;
+	int packIDreceived = -1;
 	bool hasHello = false;
 	
 	void SavePacketContent(int pId, std::string action, std::string cName);
