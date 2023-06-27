@@ -38,6 +38,7 @@ class Cliente
 
 	Packet pack;
 	std::vector<Packet> packets;
+	bool hasHello = false;
 	
 	void DeleteCriticalPacket();
 	void SafePacketContent(int pId, std::string action, std::string cName);

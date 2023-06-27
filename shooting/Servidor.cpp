@@ -71,8 +71,9 @@ void Servidor::CriticalSend(Client* con, sf::UdpSocket* sock, std::string messag
 	sf::Packet outPacket;
 	outPacket << message << con->name << packetID;
 	sock->send(outPacket, con->ip, con->port);
-	SavePacketContent(packetID++, message, con->name);
+	//SavePacketContent(packetID, message, con->name);
 	std::cout << "Critical Sending: " << message << " " << con->name << " " << packetID << std::endl;
+	std::this_thread::sleep_for(std::chrono::milliseconds(100));
 }
 
 void Servidor::PingPong()
@@ -106,12 +107,13 @@ void Servidor::PingPong()
 void Servidor::Hello(Client* con, sf::UdpSocket* sock)
 {
 	//SEND
-	if (action == "HELLO")
+	if (action == "HELLO" && !hasHello)
 	{
-		CriticalSend(con, sock, "CH_SYN", pack.packetID);
+		SavePacketContent(0, "CH_SYN", con->name);
+		CriticalSend(con, sock, "CH_SYN", 0);
 	}
 
-	else if (action == "CH_ACK" && content == con->name)
+	else if (action == "CH_ACK" && content == con->name && hasHello)
 	{
 		std::cout << "CONNECTED" << std::endl;
 
@@ -128,6 +130,7 @@ void Servidor::Hello(Client* con, sf::UdpSocket* sock)
 		timer.init(time);
 		timers.push_back(timer);
 	}
+	//action = "";
 }
 
 void Servidor::CriticalReceive(sf::UdpSocket* socket, sf::Packet* inPacket, unsigned short* remotePort, sf::IpAddress* remoteIp, std::string* action, std::string* content, int* packetID)
@@ -145,8 +148,8 @@ void Servidor::CriticalReceive(sf::UdpSocket* socket, sf::Packet* inPacket, unsi
 		}
 		else {
 			std::cout << "Critical Receive: " << *action << " " << *content << " " << *packetID << std::endl;
+			IDpack = *packetID;
 		}
-
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	}
 }
@@ -170,27 +173,31 @@ void Servidor::PacketChecker() {
 	while (true)
 	{
 		//std::cout << "Revisando tabla de paquetes" << std::endl;
-
-		for (int j = 0; j < clients.size(); j++)
-		{
-			for (int i = 0; i < packets.size(); i++)
+		if (clients.size() > 0) {
+			for (int j = 0; j < clients.size(); j++)
 			{
-				if (packets.size() > 0)
+				for (int i = 0; i < packets.size(); i++)
 				{
-					if (timersCritic.size() > 0)
+					if (packets.size() > 0)
 					{
-						timersCritic[i].update();
-						if (clients[j].name == packets[i].clientName)
+						if (timersCritic.size() > 0)
 						{
-							if (packetID == packets[i].packetID)
+							timersCritic[i].update();
+							if (clients[j].name == packets[i].clientName)
 							{
-								std::cout << "Erased Packet: " << action << std::endl;
-								packets.erase(packets.begin() + i);
-								timersCritic.erase(timersCritic.begin() + i);
-							}
-							else {
-								CriticalSend(&con, &socket, action, pack.packetID);
-								timersCritic[i].init(.5f);
+								//std::cout << IDpack << "." << packets[i].packetID << std::endl;
+								if (IDpack == packets[i].packetID)
+								{
+									std::cout << "Erased Packet: " << action << std::endl;
+									packets.erase(packets.begin() + i);
+									timersCritic.erase(timersCritic.begin() + i);
+								}
+								else if (timersCritic[i].temp <= 0) {
+									if (action != "HELLO" && action != "CH_ACK") {
+										CriticalSend(&con, &socket, action, pack.packetID);
+									}
+									timersCritic[i].init(.5f);
+								}
 							}
 						}
 					}
@@ -198,26 +205,34 @@ void Servidor::PacketChecker() {
 			}
 		}
 
-		for (int j = 0; j < NoConnectedClients.size(); j++)
-		{
-			for (int i = 0; i < packets.size(); i++)
+		if (NoConnectedClients.size() > 0) {
+			for (int j = 0; j < NoConnectedClients.size(); j++)
 			{
-				if (packets.size() > 0)
+				for (int i = 0; i < packets.size(); i++)
 				{
-					if (timersCritic.size() > 0)
+					if (packets.size() > 0)
 					{
-						timersCritic[i].update();
-						if (NoConnectedClients[j].name == packets[i].clientName)
+						if (timersCritic.size() > 0)
 						{
-							if (packetID == packets[i].packetID)
+							timersCritic[i].update();
+							if (NoConnectedClients[j].name == packets[i].clientName)
 							{
-								std::cout << "Erased Packet: " << action << std::endl;
-								packets.erase(packets.begin() + i);
-								timersCritic.erase(timersCritic.begin() + i);
-							}
-							else if (timersCritic[i].temp <= 0) {
-								CriticalSend(&con, &socket, action, pack.packetID);
-								timersCritic[i].init(.5f);
+								//std::cout << IDpack << "." << packets[i].packetID << std::endl;
+								if (IDpack == packets[i].packetID)
+								{
+									std::cout << "Erased Packet: " << action << std::endl;
+									packets.erase(packets.begin() + i);
+									timersCritic.erase(timersCritic.begin() + i);
+								}
+								else if (timersCritic[i].temp <= 0) {
+									if (action != "HELLO" && action != "CH_ACK") {
+										CriticalSend(&con, &socket, action, pack.packetID);
+									}
+									else {
+										Hello(&con, &socket);
+									}
+									timersCritic[i].init(.5f);
+								}
 							}
 						}
 					}
@@ -292,7 +307,7 @@ void Servidor::StartServer()
 	/*std::thread receiveFromClients(Receive, &socket, &inPacket, &remotePort, &remoteIP, &action, &content);
 	receiveFromClients.detach();*/
 	
-	std::thread criticalReceiveFromClients(&Servidor::CriticalReceive, this, &socket, &inPacket, &remotePort, &remoteIP, &action, &content, &packetID);
+	std::thread criticalReceiveFromClients(&Servidor::CriticalReceive, this, &socket, &inPacket, &remotePort, &remoteIP, &action, &content, &IDpack);
 	criticalReceiveFromClients.detach();
 
 	std::thread packetCheckerThread(&Servidor::PacketChecker,this);
@@ -309,7 +324,7 @@ void Servidor::StartServer()
 			//std::cout << "Receive: " << action << " " << content << " " << remotePort << std::endl;
 			
 			
-			startTime = std::chrono::steady_clock::now();
+			//startTime = std::chrono::steady_clock::now();
 			//std::cout << action << " " << content << " " << remotePort << std::endl;
 
 			for (int i = 0; i < clients.size(); i++)
@@ -321,7 +336,7 @@ void Servidor::StartServer()
 				}
 			}
 
-			if (action == "HELLO")
+			if (action == "HELLO" && !hasHello)
 			{
 				//Saving client config
 				con.name = content;
@@ -330,10 +345,12 @@ void Servidor::StartServer()
 				NoConnectedClients.push_back(con);
 				std::cout << con.name << " " << con.port << " " << con.ip << std::endl;
 				Hello(&con, &socket);
+				hasHello = true;
 			}
-			else if (action == "CH_ACK")
+			else if (action == "CH_ACK" && hasHello)
 			{
 				Hello(&con, &socket);
+				hasHello = false;
 				//EMPEZAR PROCESO DE PING PONG
 			}
 			else if (action == "CREATE") {

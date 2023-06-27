@@ -32,7 +32,7 @@ class Servidor
 	};
 
 	std::string action, content;
-	int packetID;
+	int IDpack;
 	std::map<int,Game>games; // Mapa de juegos
 	sf::UdpSocket socket;
 	
@@ -57,7 +57,7 @@ class Servidor
 	int pings = 2;
 	int pingCounter = -1;
 
-
+	bool hasHello = false;
 	std::vector<Timer> timersCritic;
 	
 public:

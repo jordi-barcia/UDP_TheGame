@@ -28,16 +28,19 @@ void Cliente::HelloClient(sf::UdpSocket* sock, sf::Packet* inPacket)
 	//SEND
 	if (action == "CH_SYN") // Programar reenvio de paquete CH_SYN;
 	{
-		packetCounter++;
+		//packetCounter++;
 		SafePacketContent(packetCounter, action, gc.name);
 		SendCritPacket(sock, "CH_ACK", gc.name, packetCounter);
+		action = "";
 	}
-	else // Programar reenvio de paquete HELLO
+	else if(!hasHello) // Programar reenvio de paquete HELLO
 	{
-		packetCounter++;
-		SafePacketContent(packetCounter, action, gc.name);
+		//packetCounter++;
+		SafePacketContent(packetCounter, "HELLO", gc.name);
 		SendCritPacket(sock, "HELLO", gc.name,packetCounter);
+		std::this_thread::sleep_for(std::chrono::milliseconds(500));
 	}
+	
 }
 
 
@@ -61,6 +64,26 @@ void Cliente::SendCritPacket(sf::UdpSocket* sock, std::string actionMssg, std::s
 		std::cout << "Sending error: " << sock->Error << std::endl;
 	}
 	std::cout << "Critical Sending: " + actionMssg << " " << contentMssg << packetID << std::endl;
+}
+
+void Cliente::ReceiveCriticalPacket(sf::UdpSocket* sock, std::string* actionMssg, std::string* contentMssg, int* packetID)
+{
+	while (true)
+	{
+		sf::Packet inPacket;
+		sock->receive(inPacket, serverIp, serverPort);
+		inPacket >> *actionMssg >> *contentMssg >> *packetID;
+
+		if (*actionMssg == "PING")
+		{
+			std::cout << "Receive: " << *actionMssg << " " << *contentMssg << " " << std::endl;
+		}
+		else {
+			std::cout << "Critical Receive: " << *actionMssg << " " << *contentMssg << " " << *packetID << std::endl;
+		}
+
+		std::this_thread::sleep_for(std::chrono::milliseconds(100));
+	}
 }
 
 void Cliente::ClientMain()
@@ -91,19 +114,19 @@ void Cliente::ClientMain()
 	std::thread deleteConfirmedPackets(&Cliente::DeleteCriticalPacket, this);
 	deleteConfirmedPackets.detach();
 
-	bool hasHello = false;
+	
 
 	gc.ClientSetup();
 	while (true) {
 
 		if (gc.chooseGame && !hasHello)
-		{
-			HelloClient(&socket, &inPacket);
-			
+		{			
 			if (action == "CH_SYN")
 			{
 				hasHello = true;
 			}
+			HelloClient(&socket, &inPacket);
+			
 		}
 
 		if (action == "JOIN_ACK")
@@ -178,24 +201,6 @@ void Cliente::GameSelected(sf::UdpSocket* sock)
 	}
 }*/
 
-void Cliente::ReceiveCriticalPacket(sf::UdpSocket* sock, std::string* actionMssg, std::string* contentMssg, int* packetID) 
-{
-	while (true)
-	{
-		sf::Packet inPacket;
-		sock->receive(inPacket, serverIp, serverPort);
-		inPacket >> *actionMssg >> *contentMssg >> *packetID;
 
-		if (*actionMssg == "PING")
-		{
-			std::cout << "Receive: " << *actionMssg << " " << *contentMssg << " " << std::endl;
-		}
-		else {
-			std::cout << "Critical Receive: " << *actionMssg << " " << *contentMssg << " " << *packetID << std::endl;
-		}
-
-		std::this_thread::sleep_for(std::chrono::milliseconds(100));
-	}
-}
 
 
