@@ -197,7 +197,7 @@ void Servidor::PacketChecker() {
 								//std::cout << IDpack << "." << packets[i].packetID << std::endl;
 								if (IDpack == packets[i].packetID)
 								{
-									std::cout << "Erased Packet: " << action << std::endl;
+									std::cout << "Erased Packet: " << packets[i].action << std::endl;
 									packets.erase(packets.begin() + i);
 									timersCritic.erase(timersCritic.begin() + i);
 								}
@@ -229,7 +229,7 @@ void Servidor::PacketChecker() {
 								//std::cout << IDpack << "." << packets[i].packetID << std::endl;
 								if (IDpack == packets[i].packetID)
 								{
-									std::cout << "Erased Packet: " << action << std::endl;
+									std::cout << "Erased Packet: " << packets[i].action << std::endl;
 									packets.erase(packets.begin() + i);
 									timersCritic.erase(timersCritic.begin() + i);
 								}
@@ -336,15 +336,6 @@ void Servidor::StartServer()
 			//startTime = std::chrono::steady_clock::now();
 			//std::cout << action << " " << content << " " << remotePort << std::endl;
 
-			for (int i = 0; i < clients.size(); i++)
-			{
-				if (clients[i].name == content)
-				{
-					timers[i].init(time);
-					pingCounter = -1;
-					content = "";
-				}
-			}
 
 			if (action == "HELLO" && !hasHello)
 			{
@@ -422,7 +413,15 @@ void Servidor::StartServer()
 
 			else if (action == "PONG")
 			{
-				// Es fa algo?
+				for (int i = 0; i < clients.size(); i++)
+				{
+					if (clients[i].name == content)
+					{
+						timers[i].init(time);
+						pingCounter = -1;
+						content = "";
+					}
+				}
 			}
 
 			else if (action == "MOV")

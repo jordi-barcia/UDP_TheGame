@@ -17,6 +17,7 @@ class Cliente
 	//Client
 	std::string action, content;
 	Timer timer;
+	std::vector<Timer> timersCritic;
 	bool check = false;
 	bool noGame = false;
 	int packetCounter = 0;
@@ -40,9 +41,9 @@ class Cliente
 	std::vector<Packet> packets;
 	bool hasHello = false;
 	
-	void DeleteCriticalPacket();
 	void SavePacketContent(int pId, std::string action, std::string cName);
 	void SendCritPacket(sf::UdpSocket* sock, std::string actionMssg, std::string contentMssg, int packetID);
+	void PacketChecker(sf::UdpSocket* sock);
 
 public:
 	Cliente() = default;
