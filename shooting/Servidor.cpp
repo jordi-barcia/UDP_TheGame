@@ -50,7 +50,12 @@ void Servidor::ShutdownServer(std::string* mssg, bool* exit) {
 				{
 					Send(&clients[i], &socket, "EXIT");
 				}
+				for (int i = 0; i < NoConnectedClients.size(); i++)
+				{
+					Send(&NoConnectedClients[i], &socket, "EXIT");
+				}
 				clients.erase(clients.begin(), clients.begin() + clients.size());
+				NoConnectedClients.erase(NoConnectedClients.begin(), NoConnectedClients.begin() + NoConnectedClients.size());
 				*exit = false;
 				std::terminate();
 			}
@@ -115,7 +120,7 @@ void Servidor::Hello(Client* con, sf::UdpSocket* sock)
 		CriticalSend(con, sock, "CH_SYN", 0);
 	}
 
-	else if (action == "CH_ACK" && content == con->name && hasHello)
+	else if (action == "CH_ACK")
 	{
 		std::cout << "CONNECTED" << std::endl;
 
@@ -132,8 +137,9 @@ void Servidor::Hello(Client* con, sf::UdpSocket* sock)
 		timer.init(time);
 		timers.push_back(timer);
 		std::cout << timers.size() << std::endl;
+		action = "";
+		hasHello = false;
 	}
-	//action = "";
 }
 
 void Servidor::CriticalReceive(sf::UdpSocket* socket, sf::Packet* inPacket, unsigned short* remotePort, sf::IpAddress* remoteIp, std::string* action, std::string* content, int* packetID)
@@ -147,7 +153,7 @@ void Servidor::CriticalReceive(sf::UdpSocket* socket, sf::Packet* inPacket, unsi
 		*inPacket >> *action >> *content >> *packetID;
 		if (*action == "PONG")
 		{
-			std::cout << "Receive: " << *action << " " << *content << " " << std::endl;
+			std::cout << "Receive: " << *action << " " << *content << std::endl;
 		}
 		else {
 			std::cout << "Critical Receive: " << *action << " " << *content << " " << *packetID << std::endl;
@@ -229,7 +235,7 @@ void Servidor::PacketChecker() {
 								}
 								else if (timersCritic[i].temp <= 0) {
 									if (action != "HELLO" && action != "CH_ACK") {
-										//CriticalSend(&con, &socket, action, pack.packetID);
+
 									}
 									else {
 										Hello(&con, &socket);
@@ -361,13 +367,16 @@ void Servidor::StartServer()
 				std::cout << "creating game..." << std::endl;
 				for (int j = 0; j < clients.size(); j++)
 				{
-					if (clients[j].port == remotePort)
+					if (clients[j].port == con.port)
 					{
 						hasCreatedGame[j] = true;
 						games[nextGameId] = Game{};
 						clientToGames[clients[j].name] = nextGameId;
 						nextGameId++;
 						std::cout << "Numero de Games creados: " << games.size() << std::endl;
+						IDpack = 1;
+						SavePacketContent(IDpack, "CREATE_ACK", con.name);
+						CriticalSend(&con, &socket, "CREATE_ACK", IDpack);
 					}
 				}
 				inPacket.clear();
@@ -384,7 +393,9 @@ void Servidor::StartServer()
 					int gameId = clientToGames[clients[indexClosestClient].name];
 					clientToGames[con.name] = gameId; // Content = client.name(El que pide el join)
 					Client ClientName = GetClientFromName(con.name);
-					Send(&ClientName, &socket, "JOIN_ACK");
+					IDpack = 1;
+					SavePacketContent(IDpack, "JOIN_ACK", con.name);
+					CriticalSend(&ClientName, &socket, "JOIN_ACK", IDpack);
 				}
 				inPacket.clear();
 			}

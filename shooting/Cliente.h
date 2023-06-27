@@ -41,7 +41,7 @@ class Cliente
 	bool hasHello = false;
 	
 	void DeleteCriticalPacket();
-	void SafePacketContent(int pId, std::string action, std::string cName);
+	void SavePacketContent(int pId, std::string action, std::string cName);
 	void SendCritPacket(sf::UdpSocket* sock, std::string actionMssg, std::string contentMssg, int packetID);
 
 public:
