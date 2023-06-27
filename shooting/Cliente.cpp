@@ -73,12 +73,12 @@ void Cliente::ReceiveCriticalPacket(sf::UdpSocket* sock, std::string* actionMssg
 		sf::Packet inPacket;
 		sock->receive(inPacket, serverIp, serverPort);
 		inPacket >> *actionMssg >> *contentMssg >> *packetID;
-
 		if (*actionMssg == "PING")
 		{
 			std::cout << "Receive: " << *actionMssg << " " << *contentMssg << " " << std::endl;
 		}
 		else {
+			
 			std::cout << "Critical Receive: " << *actionMssg << " " << *contentMssg << " " << *packetID << std::endl;
 		}
 

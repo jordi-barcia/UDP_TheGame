@@ -85,6 +85,7 @@ void Servidor::PingPong()
 				//mtx.lock();
 				if (pingCounter == -1)
 				{
+					std::cout << "entro PING" << std::endl;
 					Send(&clients[i], &socket, "PING");
 					pingCounter++;
 				}
@@ -129,6 +130,7 @@ void Servidor::Hello(Client* con, sf::UdpSocket* sock)
 
 		timer.init(time);
 		timers.push_back(timer);
+		std::cout << timers.size() << std::endl;
 	}
 	//action = "";
 }
@@ -333,6 +335,7 @@ void Servidor::StartServer()
 				{
 					timers[i].init(time);
 					pingCounter = -1;
+					content = "";
 				}
 			}
 
