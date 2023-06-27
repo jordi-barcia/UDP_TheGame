@@ -94,11 +94,13 @@ void Servidor::PingPong()
 					std::cout << "entro PING" << std::endl;
 					Send(&clients[i], &socket, "PING");
 					pingCounter++;
+					timers[i].init(2);
 				}
 				else if (pingCounter <= 4 && pingCounter >= 0)
 				{
 					Send(&clients[i], &socket, "PING");
 					pingCounter++;
+					timers[i].init(2);
 				}
 				else if (pingCounter >= 4)
 				{
@@ -175,7 +177,6 @@ void Servidor::CriticalReceive(sf::UdpSocket* socket, sf::Packet* inPacket, unsi
 //		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 //	}
 //}
-
 
 void Servidor::PacketChecker() {
 	
