@@ -64,6 +64,7 @@ void Servidor::Send(Client* con, sf::UdpSocket* sock, std::string message)
 	outPacket << message << con->name;
 	sock->send(outPacket, con->ip, con->port);
 	std::cout << "Sending: " + message << " " + con->name << " " + con->port << std::endl;
+	std::this_thread::sleep_for(std::chrono::milliseconds(10));
 }
 
 void Servidor::CriticalSend(Client* con, sf::UdpSocket* sock, std::string message, int packetID)
@@ -73,7 +74,7 @@ void Servidor::CriticalSend(Client* con, sf::UdpSocket* sock, std::string messag
 	sock->send(outPacket, con->ip, con->port);
 	//SavePacketContent(packetID, message, con->name);
 	std::cout << "Critical Sending: " << message << " " << con->name << " " << packetID << std::endl;
-	std::this_thread::sleep_for(std::chrono::milliseconds(100));
+	std::this_thread::sleep_for(std::chrono::milliseconds(10));
 }
 
 void Servidor::PingPong()
@@ -196,7 +197,7 @@ void Servidor::PacketChecker() {
 								}
 								else if (timersCritic[i].temp <= 0) {
 									if (action != "HELLO" && action != "CH_ACK") {
-										CriticalSend(&con, &socket, action, pack.packetID);
+										CriticalSend(&con, &socket, packets[i].action, pack.packetID);
 									}
 									timersCritic[i].init(.5f);
 								}
@@ -228,7 +229,7 @@ void Servidor::PacketChecker() {
 								}
 								else if (timersCritic[i].temp <= 0) {
 									if (action != "HELLO" && action != "CH_ACK") {
-										CriticalSend(&con, &socket, action, pack.packetID);
+										//CriticalSend(&con, &socket, action, pack.packetID);
 									}
 									else {
 										Hello(&con, &socket);
@@ -296,8 +297,8 @@ void Servidor::StartServer()
 	unsigned short remotePort = 0;
 	
 	//Time
-	auto startTime = std::chrono::steady_clock::now();
-	auto duration = std::chrono::steady_clock::now() - startTime;
+	//auto startTime = std::chrono::steady_clock::now();
+	//auto duration = std::chrono::steady_clock::now() - startTime;
 	//int pingCounter = -1;
 
 	//Threads

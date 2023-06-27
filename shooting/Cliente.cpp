@@ -2,14 +2,16 @@
 
 void Cliente::DeleteCriticalPacket() 
 {
-	if (packets.size() > 0)
-	{
-		for (int i = 0; i < packets.size(); i++)
+	while (true) {
+		if (packets.size() > 0)
 		{
-			if (packetCounter == packets[i].packetID)
+			for (int i = 0; i < packets.size(); i++)
 			{
-				std::cout << "Erased Packet: " << action << std::endl;
-				packets.erase(packets.begin() + i);
+				if (packetCounter == packets[i].packetID)
+				{
+					std::cout << "Erased Packet: " << packets[i].action << std::endl;
+					packets.erase(packets.begin() + i);
+				}
 			}
 		}
 	}
@@ -29,7 +31,7 @@ void Cliente::HelloClient(sf::UdpSocket* sock, sf::Packet* inPacket)
 	if (action == "CH_SYN") // Programar reenvio de paquete CH_SYN;
 	{
 		//packetCounter++;
-		SafePacketContent(packetCounter, action, gc.name);
+		SafePacketContent(packetCounter, "CH_ACK", gc.name);
 		SendCritPacket(sock, "CH_ACK", gc.name, packetCounter);
 		action = "";
 	}
@@ -53,6 +55,7 @@ void Cliente::SendPacket(sf::UdpSocket* sock, std::string actionMssg, std::strin
 		std::cout << "Sending error: " << sock->Error << std::endl;
 	}
 	std::cout << "Sending: " + actionMssg << " " + contentMssg << std::endl;
+	std::this_thread::sleep_for(std::chrono::milliseconds(10));
 }
 
 void Cliente::SendCritPacket(sf::UdpSocket* sock, std::string actionMssg, std::string contentMssg, int packetID)
@@ -64,6 +67,7 @@ void Cliente::SendCritPacket(sf::UdpSocket* sock, std::string actionMssg, std::s
 		std::cout << "Sending error: " << sock->Error << std::endl;
 	}
 	std::cout << "Critical Sending: " + actionMssg << " " << contentMssg << packetID << std::endl;
+	std::this_thread::sleep_for(std::chrono::milliseconds(10));
 }
 
 void Cliente::ReceiveCriticalPacket(sf::UdpSocket* sock, std::string* actionMssg, std::string* contentMssg, int* packetID)
@@ -82,7 +86,7 @@ void Cliente::ReceiveCriticalPacket(sf::UdpSocket* sock, std::string* actionMssg
 			std::cout << "Critical Receive: " << *actionMssg << " " << *contentMssg << " " << *packetID << std::endl;
 		}
 
-		std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		std::this_thread::sleep_for(std::chrono::milliseconds(50));
 	}
 }
 
