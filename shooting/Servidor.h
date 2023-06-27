@@ -7,6 +7,9 @@
 #include <functional>
 #include <map>
 #include "Timer.h"
+#include <iomanip>
+#include <time.h>
+#include <stdlib.h>
 
 class Servidor
 {
@@ -33,6 +36,11 @@ class Servidor
 
 	std::string action, content;
 	int IDpack;
+	double rttxPacket = 0.0f;
+	std::vector<double> rttContainer;
+	Packet pack;
+	std::vector<Packet> packets;
+	
 	std::map<int,Game>games; // Mapa de juegos
 	sf::UdpSocket socket;
 	
@@ -44,18 +52,23 @@ class Servidor
 	Client GetClientFromName(std::string name);
 	//void Ping(std::atomic_bool* stopThread);
 
+	char key;
+
 	void CriticalReceive(sf::UdpSocket* socket, sf::Packet* inPacket, unsigned short* remotePort, sf::IpAddress* remoteIp, std::string* action, std::string* content, int* packetID);
 	void CriticalSend(Client* con, sf::UdpSocket* sock, std::string message, int packetID);
 	void SavePacketContent(int pId, std::string action, std::string cName);
-	Packet pack;
-	std::vector<Packet> packets;
+	void RTTCalculation();
+	void RTTChanger();
 
 	//Timer
 	Timer timer;
 	std::vector<Timer> timers; // Timer para gestionar la desconexion de cada uno de los clientes. 
-	int time = 10;
+	int initialTime = 10;
 	int pings = 2;
 	int pingCounter = -1;
+	int expected_fps = 30;
+	double expected_frametime = 1.0 / expected_fps;
+	int packetLostProb = 1;
 
 	bool hasHello = false;
 	std::vector<Timer> timersCritic;

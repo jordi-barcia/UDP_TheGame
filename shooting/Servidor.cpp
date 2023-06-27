@@ -76,9 +76,15 @@ void Servidor::CriticalSend(Client* con, sf::UdpSocket* sock, std::string messag
 {
 	sf::Packet outPacket;
 	outPacket << message << con->name << packetID;
-	sock->send(outPacket, con->ip, con->port);
+	
+	int random = rand() % packetLostProb;
+	std::cout << "Random Prob send: " << random << std::endl;
+	if (random == 0)
+	{
+		sock->send(outPacket, con->ip, con->port);
+		std::cout << "Critical Sending: " << message << " " << con->name << " " << packetID << std::endl;
+	}
 	//SavePacketContent(packetID, message, con->name);
-	std::cout << "Critical Sending: " << message << " " << con->name << " " << packetID << std::endl;
 	std::this_thread::sleep_for(std::chrono::milliseconds(10));
 }
 
@@ -113,6 +119,27 @@ void Servidor::PingPong()
 	}
 }
 
+void Servidor::RTTChanger()
+{
+	while (true)
+	{
+		std::cin >> key;
+		if (key == '9')
+		{
+			packetLostProb++;
+			std::cout << "RTT Prob: " << packetLostProb << std::endl;
+		}
+		else if (key == '8')
+		{
+			if (packetLostProb > 1)
+			{
+				packetLostProb--;
+				std::cout << "RTT Prob: " << packetLostProb << std::endl;
+			}			
+		}
+	}
+}
+
 void Servidor::Hello(Client* con, sf::UdpSocket* sock)
 {
 	//SEND
@@ -136,7 +163,7 @@ void Servidor::Hello(Client* con, sf::UdpSocket* sock)
 		create = false;
 		hasCreatedGame.push_back(create);
 
-		timer.init(time);
+		timer.init(initialTime);
 		timers.push_back(timer);
 		std::cout << timers.size() << std::endl;
 		action = "";
@@ -178,6 +205,25 @@ void Servidor::CriticalReceive(sf::UdpSocket* socket, sf::Packet* inPacket, unsi
 //	}
 //}
 
+void Servidor::RTTCalculation() 
+{
+	while (true)
+	{
+		double aux = 0.0f;
+		for (int i = 0; i < rttContainer.size(); i++)
+		{
+			if (i < 10)
+			{
+				aux = aux + rttContainer[i];
+			}
+		}
+		aux /= 10.0f;
+		
+		std::cout << "RTT: " << std::setprecision(10) << aux << std::endl;
+		std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+	}
+}
+
 void Servidor::PacketChecker() {
 	
 	while (true)
@@ -193,17 +239,23 @@ void Servidor::PacketChecker() {
 						if (timersCritic.size() > 0)
 						{
 							timersCritic[i].update();
+							rttxPacket += expected_frametime;
 							if (clients[j].name == packets[i].clientName)
 							{
 								//std::cout << IDpack << "." << packets[i].packetID << std::endl;
 								if (IDpack == packets[i].packetID)
 								{
 									std::cout << "Erased Packet: " << packets[i].action << std::endl;
+									
+									rttContainer.insert(rttContainer.begin(), rttxPacket);
+									rttxPacket = 0.0f;
+
 									packets.erase(packets.begin() + i);
 									timersCritic.erase(timersCritic.begin() + i);
 								}
 								else if (timersCritic[i].temp <= 0) {
 									if (action != "HELLO" && action != "CH_ACK") {
+
 										CriticalSend(&con, &socket, packets[i].action, pack.packetID);
 									}
 									timersCritic[i].init(.5f);
@@ -225,12 +277,17 @@ void Servidor::PacketChecker() {
 						if (timersCritic.size() > 0)
 						{
 							timersCritic[i].update();
+							rttxPacket += expected_frametime;
 							if (NoConnectedClients[j].name == packets[i].clientName)
 							{
 								//std::cout << IDpack << "." << packets[i].packetID << std::endl;
 								if (IDpack == packets[i].packetID)
 								{
 									std::cout << "Erased Packet: " << packets[i].action << std::endl;
+								
+									rttContainer.insert(rttContainer.begin(), rttxPacket);
+									rttxPacket = 0.0f;
+
 									packets.erase(packets.begin() + i);
 									timersCritic.erase(timersCritic.begin() + i);
 								}
@@ -251,7 +308,6 @@ void Servidor::PacketChecker() {
 		}
 	}
 }
-
 
 void Servidor::SavePacketContent(int pId, std::string action, std::string cName) 
 {
@@ -323,6 +379,13 @@ void Servidor::StartServer()
 	std::thread packetCheckerThread(&Servidor::PacketChecker,this);
 	packetCheckerThread.detach();
 
+	std::thread rttCalculationThread(&Servidor::RTTCalculation, this);
+	rttCalculationThread.detach();
+	
+	std::thread rttChangerThread(&Servidor::RTTChanger, this);
+	rttChangerThread.detach();
+
+	srand(time(NULL));
 
 
 	while (exit) {
@@ -418,7 +481,7 @@ void Servidor::StartServer()
 				{
 					if (clients[i].name == content)
 					{
-						timers[i].init(time);
+						timers[i].init(initialTime);
 						pingCounter = -1;
 						content = "";
 					}
