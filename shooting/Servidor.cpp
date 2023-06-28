@@ -21,7 +21,7 @@ int Servidor::GetClosestClient(unsigned short remotePort) {
 			break;
 		}
 	}
-	return closestClient;
+	return closestClient; // Devuelve la posicion en el vector del cliente mas cercano
 }
 
 Servidor::Client Servidor::GetClientFromName(std::string name)
@@ -31,34 +31,6 @@ Servidor::Client Servidor::GetClientFromName(std::string name)
 		if (clients[i].name == name)
 		{
 			return clients[i];
-		}
-	}
-}
-
-void Servidor::ShutdownServer(std::string* mssg, bool* exit) {
-	while (*exit) {
-		std::string line;
-		std::getline(std::cin, line);
-		mssg->assign(line);
-
-		if (line.size() > 0)
-		{
-			if (line == "exit")
-			{
-				std::cout << "DISCONNECTED" << std::endl;
-				for (int i = 0; i < clients.size(); i++)
-				{
-					Send(&clients[i], &socket, "EXIT");
-				}
-				for (int i = 0; i < NoConnectedClients.size(); i++)
-				{
-					Send(&NoConnectedClients[i], &socket, "EXIT");
-				}
-				clients.erase(clients.begin(), clients.begin() + clients.size());
-				NoConnectedClients.erase(NoConnectedClients.begin(), NoConnectedClients.begin() + NoConnectedClients.size());
-				*exit = false;
-				std::terminate();
-			}
 		}
 	}
 }
@@ -77,77 +49,46 @@ void Servidor::CriticalSend(Client* con, sf::UdpSocket* sock, std::string messag
 	sf::Packet outPacket;
 	outPacket << message << con->name << packetID;
 	
-	int random = rand() % packetLostProb;
-	if (random == 0)
+	int random = rand() % packetLostProb; // Crea un numero random con el numero proporcionado para forzar la perdida de paquetes. 
+	if (random == 0) // Envia el mensaje solo si el valor es 0.
 	{
 		sock->send(outPacket, con->ip, con->port);
 		std::cout << "Critical Sending: " << message << " " << con->name << " " << packetID << std::endl;
 		check = "SENDED";
 	}
-	//SavePacketContent(packetID, message, con->name);
 	std::this_thread::sleep_for(std::chrono::milliseconds(10));
 }
 
-void Servidor::PingPong()
-{
-	if (timers.size() > 0) {
-		for (int i = 0; i < timers.size(); i++) {
-			timers[i].update();
-			if (timers[i].temp <= 0) {
-				//mtx.lock();
-				if (pingCounter == -1)
-				{
-					Send(&clients[i], &socket, "PING");
-					pingCounter++;
-					timers[i].init(2);
-				}
-				else if (pingCounter < 4 && pingCounter >= 0)
-				{
-					Send(&clients[i], &socket, "PING");
-					pingCounter++;
-					timers[i].init(2);
-				}
-				else if (pingCounter > 4)
-				{
-					action == "EXIT_CL";
-				}
-				//mtx.unlock();
-			}
-		}
-		std::this_thread::sleep_for(std::chrono::milliseconds(10));
-	}
-}
-
-void Servidor::RTTChanger()
+void Servidor::CriticalReceive(sf::UdpSocket* socket, sf::Packet* inPacket, unsigned short* remotePort, sf::IpAddress* remoteIp, std::string* action, std::string* content, int* packetID)
 {
 	while (true)
 	{
-		std::cin >> key;
-		if (key == '9')
+		if (socket->receive(*inPacket, *remoteIp, *remotePort) != socket->Done)
 		{
-			packetLostProb++;
-			std::cout << "RTT Prob: " << packetLostProb << std::endl;
+			std::cout << "Receive Error: " << socket->Error << std::endl;
 		}
-		else if (key == '8')
+		*inPacket >> *action >> *content >> *packetID;
+		if (*action == "PONG") // Si el contenido del mensaje es PONG lo trata como paquete no critico. (Faltaria añadir los mensajes de action = MOV)
 		{
-			if (packetLostProb > 1)
-			{
-				packetLostProb--;
-				std::cout << "RTT Prob: " << packetLostProb << std::endl;
-			}			
+			std::cout << "Receive: " << *action << " " << *content << std::endl;
 		}
+		else { // Si el mensaje es de otro tipo lo trata como critico.
+			std::cout << "Critical Receive: " << *action << " " << *content << " " << *packetID << std::endl;
+			packIDreceived = *packetID;
+		}
+		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	}
 }
 
 void Servidor::Hello(Client* con, sf::UdpSocket* sock)
 {
 	//SEND
-	if (action == "HELLO")
+	if (action == "HELLO") // Si la action es un HELLO le envia CH_SYN
 	{
 		CriticalSend(con, sock, "CH_SYN", 0);
 	}
 
-	else if (action == "CH_ACK")
+	else if (action == "CH_ACK") // Si la action es un CH_ACK lo elimina de la tabla de clientes no conectados y lo pone en la tabla de conectados.
 	{
 		std::cout << "CONNECTED" << std::endl;
 
@@ -168,28 +109,28 @@ void Servidor::Hello(Client* con, sf::UdpSocket* sock)
 	}
 }
 
-void Servidor::CriticalReceive(sf::UdpSocket* socket, sf::Packet* inPacket, unsigned short* remotePort, sf::IpAddress* remoteIp, std::string* action, std::string* content, int* packetID)
+void Servidor::RTTChanger() 
 {
 	while (true)
 	{
-		if (socket->receive(*inPacket, *remoteIp, *remotePort) != socket->Done)
+		std::cin >> key;
+		if (key == '9') // Sube la probabilidad de perdida de mensaje.
 		{
-			std::cout << "Receive Error: " << socket->Error << std::endl;
+			packetLostProb++;
+			std::cout << "Message failure prob: " << 100/packetLostProb << "%" << std::endl;
 		}
-		*inPacket >> *action >> *content >> *packetID;
-		if (*action == "PONG")
+		else if (key == '8')
 		{
-			std::cout << "Receive: " << *action << " " << *content << std::endl;
+			if (packetLostProb > 1)// Baja la probabilidad de perdida de mensaje.
+			{
+				packetLostProb--;
+				std::cout << "Message failure prob: " << 100/packetLostProb << "%" << std::endl;
+			}			
 		}
-		else {
-			std::cout << "Critical Receive: " << *action << " " << *content << " " << *packetID << std::endl;
-			packIDreceived = *packetID;
-		}
-		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	}
 }
 
-void Servidor::RTTCalculation() 
+void Servidor::RTTCalculation()
 {
 	while (true)
 	{
@@ -203,7 +144,7 @@ void Servidor::RTTCalculation()
 		}
 		aux /= 10.0f;
 		
-		std::cout << "RTT: " << std::setprecision(10) << aux << std::endl;
+		std::cout << "RTT: " << std::setprecision(10) << aux << std::endl; // Imprime por pantalla el RTT de los ultimos 10 paquetes criticos.
 		std::this_thread::sleep_for(std::chrono::milliseconds(2000));
 	}
 }
@@ -212,35 +153,36 @@ void Servidor::PacketChecker() {
 	
 	while (true)
 	{
-		//std::cout << "Revisando tabla de paquetes" << std::endl;
-		if (clients.size() > 0) {
+		if (clients.size() > 0) { // Entra si hay algun cliente conectado
 			for (int j = 0; j < clients.size(); j++)
 			{
-				for (int i = 0; i < packets.size(); i++)
+				for (int i = 0; i < packets.size(); i++)// Revisa por cada cliente los paquetes que tiene sin confirmar
 				{
-					if (packets.size() > 0)
+					if (packets.size() > 0) // Revisamos si hay algun paquete.
 					{
 						if (timersCritic.size() > 0)
 						{
 							timersCritic[i].update();
-							rttxPacket += expected_frametime;
+							rttxPacket += expected_frametime; // Aumentamos el tiempo del RTT del paquete.
 							if (clients[j].name == packets[i].clientName)
 							{
-								//std::cout << IDpack << "." << packets[i].packetID << std::endl;
-								if (action == "CREATE" || action == "JOINED") {
-									if (timersCritic[i].temp <= 0) {
+								if (action == "CREATE" || action == "JOINED") { // Los clientes conectados revisan si han recibido uno de estos dos mensajes.
+									if (timersCritic[i].temp <= 0) {// Si el tiempo de reenvio del paquete es inferior a 0 se hace el reenvio. 
+										if (clients[j].name == content)
+										{
+											timers[j].init(initialTime); // Reiniciamos el tiempo del PING PONG.
+											pingCounter = -1;
+										}
 										CriticalSend(&con, &socket, packets[i].action, pack.packetID);
 										timersCritic[i].init(0.5f);
 										std::this_thread::sleep_for(std::chrono::milliseconds(500));
-										//action = "";
 									}
 								}
-								if(check == "SENDED")
+								if(check == "SENDED") // Al confirmar un envio de un paquete critico revisamos que la id del paquete recibido sea la misma que el enviado y lo borramos de la tabla de paquetes.
 								{
 									if (packIDreceived == packets[i].packetID) {
 										std::cout << "Erased Packet: " << packets[i].action << std::endl;
 
-										rttxPacket += expected_frametime;
 										rttContainer.insert(rttContainer.begin(), rttxPacket);
 										rttxPacket = 0.0f;
 
@@ -250,8 +192,7 @@ void Servidor::PacketChecker() {
 										action = "";
 										selectGame = false;
 									}
-								}
-								
+								}								
 							}
 						}
 					}
@@ -259,32 +200,30 @@ void Servidor::PacketChecker() {
 			}
 		}
 
-		if (NoConnectedClients.size() > 0) {
+		if (NoConnectedClients.size() > 0) { // Entra si hay algun cliente no conectado
 			for (int j = 0; j < NoConnectedClients.size(); j++)
 			{
-				for (int i = 0; i < packets.size(); i++)
+				for (int i = 0; i < packets.size(); i++)// Revisa por cada cliente los paquetes que tiene sin confirmar
 				{
-					if (packets.size() > 0)
+					if (packets.size() > 0)// Revisamos si hay algun paquete.
 					{
 						if (timersCritic.size() > 0)
 						{
 							timersCritic[i].update();
-							rttxPacket += expected_frametime;
+							rttxPacket += expected_frametime; // Aumentamos el tiempo del RTT del paquete.
 							if (NoConnectedClients[j].name == packets[i].clientName)
 							{
-								//std::cout << action << std::endl;
-								if (packIDreceived == packets[i].packetID)
+								if (packIDreceived == packets[i].packetID)// Revisamos que la id del paquete recibido sea la misma que el enviado y lo borramos de la tabla de paquetes.
 								{
 									std::cout << "Erased Packet: " << packets[i].action << std::endl;
 
-									rttxPacket += expected_frametime;
 									rttContainer.insert(rttContainer.begin(), rttxPacket);
 									rttxPacket = 0.0f;
 
 									packets.erase(packets.begin() + i);
 									timersCritic.erase(timersCritic.begin() + i);
 								}
-								else if (timersCritic[i].temp <= 0) {
+								else if (timersCritic[i].temp <= 0) {// Si el tiempo de reenvio del paquete es inferior a 0 se hace el reenvio. 
 									if (action != "CH_ACK") {
 										Hello(&con, &socket);
 										std::this_thread::sleep_for(std::chrono::milliseconds(500));
@@ -310,8 +249,64 @@ void Servidor::SavePacketContent(int pId, std::string action, std::string cName)
 	timersCritic.push_back(timer);
 }
 
+void Servidor::PingPong()
+{
+	if (timers.size() > 0) {
+		for (int i = 0; i < timers.size(); i++) {
+			timers[i].update();
+			if (timers[i].temp <= 0) { // Cada 10 segundos enviara un PING
+				if (pingCounter == -1)
+				{
+					Send(&clients[i], &socket, "PING");
+					pingCounter++;
+					timers[i].init(2);
+				}
+				else if (pingCounter < 4 && pingCounter >= 0) // Cada 2 segundos se enviara PING (Hasta 5)
+				{
+					Send(&clients[i], &socket, "PING");
+					pingCounter++;
+					timers[i].init(2);
+				}
+				else if (pingCounter > 4) // Si no responde a los PINGS se desconecta al cliente
+				{
+					action == "EXIT_CL";
+				}
+			}
+		}
+		std::this_thread::sleep_for(std::chrono::milliseconds(10));
+	}
+}
 
-std::thread timer;
+void Servidor::ShutdownServer(std::string* mssg, bool* exit) {
+	while (*exit) {
+		std::string line;
+		std::getline(std::cin, line);
+		mssg->assign(line);
+
+		if (line.size() > 0)
+		{
+			if (line == "exit") // Si se escribe "exit" por consola el servidor se cierra vaciando todas las tablas. 
+			{
+				std::cout << "DISCONNECTED" << std::endl;
+				for (int i = 0; i < clients.size(); i++)
+				{
+					Send(&clients[i], &socket, "EXIT");
+				}
+				for (int i = 0; i < NoConnectedClients.size(); i++)
+				{
+					Send(&NoConnectedClients[i], &socket, "EXIT");
+				}
+				clients.clear();
+				NoConnectedClients.clear();
+				timersCritic.clear();
+				timers.clear();
+				packets.clear();
+				*exit = false;
+				std::terminate();
+			}
+		}
+	}
+}
 
 void Servidor::StartServer()
 {
@@ -333,20 +328,24 @@ void Servidor::StartServer()
 	unsigned short remotePort = 0;
 
 	//Threads
-	std::atomic_bool stopThreadTimer;
 	
-	std::thread read_console_t(&Servidor::ShutdownServer, this, &sendMessage, &exit);
-	read_console_t.detach();
+	//Thread para cerrar el servidor
+	std::thread shutdownServerThread(&Servidor::ShutdownServer, this, &sendMessage, &exit);
+	shutdownServerThread.detach();
 	
+	//Thread para recibir los mensajes de los clientes
 	std::thread criticalReceiveFromClients(&Servidor::CriticalReceive, this, &socket, &inPacket, &remotePort, &remoteIP, &action, &content, &IDpack);
 	criticalReceiveFromClients.detach();
 
+	//Thread para revisar los paquetes de los clientes
 	std::thread packetCheckerThread(&Servidor::PacketChecker,this);
 	packetCheckerThread.detach();
 
+	//Thread para ir calculando el RTT
 	std::thread rttCalculationThread(&Servidor::RTTCalculation, this);
 	rttCalculationThread.detach();
 	
+	//Thread para leer el % de fallo del envio de paquetes
 	std::thread rttChangerThread(&Servidor::RTTChanger, this);
 	rttChangerThread.detach();
 
@@ -361,10 +360,11 @@ void Servidor::StartServer()
 			if (action == "HELLO" && !hasHello)
 			{
 				std::this_thread::sleep_for(std::chrono::milliseconds(50));
-				//Saving client config
+				//Guarda la configuracion del cliente
 				con.name = content;
 				con.port = remotePort;
 				con.ip = remoteIP;
+				//Guarda la informacion en la tabla de clientes no conectados
 				NoConnectedClients.push_back(con);
 				std::cout << con.name << " " << con.port << " " << con.ip << std::endl;
 				SavePacketContent(1, "CH_SYN", con.name);
@@ -375,9 +375,8 @@ void Servidor::StartServer()
 			{
 				Hello(&con, &socket);
 				hasHello = false;
-				//EMPEZAR PROCESO DE PING PONG
 			}
-			else if (action == "CREATE" && !selectGame) {
+			else if (action == "CREATE" && !selectGame) {// Si recibe CREATED empieza el proceso de creacion.
 				std::cout << "creating game..." << std::endl;
 				for (int j = 0; j < clients.size(); j++)
 				{
@@ -396,14 +395,13 @@ void Servidor::StartServer()
 				inPacket.clear();
 				selectGame = true;
 			}
-			else if (action == "JOINED" && !selectGame) {
+			else if (action == "JOINED" && !selectGame) { // Si recibe JOINED empieza el proceso de conexion del cliente.
 				std::cout << "joining game..." << std::endl;
-				if (games.size() % 2 == 0 || games.size() == 0)
+				if (games.size() % 2 == 0 || games.size() == 0) // Si no hay juegos creados para que el se una envia un NO_GAME al cliente para decirle que mande un create. 
 				{
-					// Moverlo a una funcion de create o copiar lo que esta en CREATE
 					Send(&con, &socket, "NO_GAME");
 				}
-				else {
+				else { // Conecta al cliente que busca partida con el que tenga la primera letra del nombre mas cercana a la suya 
 					int indexClosestClient = GetClosestClient(remotePort);
 					int gameId = clientToGames[clients[indexClosestClient].name];
 					clientToGames[con.name] = gameId; // Content = client.name(El que pide el join)
@@ -415,11 +413,11 @@ void Servidor::StartServer()
 				}
 				inPacket.clear();
 			}
-			else if (action == "EXIT_CL")
+			else if (action == "EXIT_CL") // Si recibe EXIT_CL por parte del cliente empieza la desconnexion
 			{
 				for (int i = 0; i < clients.size(); i++)
 				{
-					if (clients[i].name == content)
+					if (clients[i].name == content) // SI encuentra al cliente en cuestion lo borra de la tabla junto a su timer. 
 					{
 						std::cout << "DISCONNECTED: " << clients[i].name + " " << clients[i].port << std::endl;
 						clients.erase(clients.begin() + i);
@@ -434,9 +432,17 @@ void Servidor::StartServer()
 						}
 					}
 				}
+				for (int i = 0; i < packets.size(); i++)  // Borra los paquetes y los Timers de cada paquete
+				{
+					if (packets[i].clientName == content)
+					{
+						timersCritic.erase(timersCritic.begin() + i);
+						packets.erase(packets.begin() + i);
+					}
+				}
 			}
 
-			if (action == "PONG")
+			if (action == "PONG") // Si recibe un PONG se resetean los valores del PING
 			{
 				for (int i = 0; i < clients.size(); i++)
 				{
@@ -458,3 +464,4 @@ void Servidor::StartServer()
 		PingPong();
 	}
 }
+

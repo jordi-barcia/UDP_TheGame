@@ -13,79 +13,71 @@
 
 class Servidor
 {
+	//Server
+	sf::UdpSocket socket;
+	char key;
+	
+	//Client
 	struct Client {
 		sf::IpAddress ip;
 		unsigned short port;
 		std::string name;
 		int id = -1;
-		//int ch_ts; // Timeout para el challenge
-		std::string challenge; // Pregunta del challenge
-		std::string solution; // Respuesta al challenge
 	};
-
 	Client con;
+	std::vector<Client> clients; // Tabla de clientes conectados
+	std::vector<Client> NoConnectedClients; // Tabla de clientes no conectados. 
+	int clientID;
 
+	//Game
 	struct Game {
 	};
+	std::map<int,Game>games; // Mapa de juegos
+	std::vector<bool> hasCreatedGame;
+	std::map<std::string, int>clientToGames; // Mapa para identificar clientes con el juego en el que estan. 
+	int nextGameId = 0;
 
+	//Packet
 	struct Packet{
 		int packetID;
 		std::string action;
 		std::string clientName;
 	};
-
+	Packet pack;
+	std::vector<Packet> packets; // Tabla de paquetes criticos
 	std::string action, content, check;
 	int IDpack;
 	int packIDreceived = -1;
 	bool selectGame = false;
 	double rttxPacket = 0.0f;
 	std::vector<double> rttContainer;
-	Packet pack;
-	std::vector<Packet> packets;
-	
-	std::map<int,Game>games; // Mapa de juegos
-	sf::UdpSocket socket;
-	
 	bool create = true;
-	std::vector<bool> hasCreatedGame;
-	std::map<std::string, int>clientToGames;
-	int nextGameId = 0;
-	int GetClosestClient(unsigned short remotePort);
-	Client GetClientFromName(std::string name);
-	//void Ping(std::atomic_bool* stopThread);
-
-	char key;
-
-	void CriticalReceive(sf::UdpSocket* socket, sf::Packet* inPacket, unsigned short* remotePort, sf::IpAddress* remoteIp, std::string* action, std::string* content, int* packetID);
-	void CriticalSend(Client* con, sf::UdpSocket* sock, std::string message, int packetID);
-	void SavePacketContent(int pId, std::string action, std::string cName);
-	void RTTCalculation();
-	void RTTChanger();
+	int packetLostProb = 1;
+	bool hasHello = false;
 
 	//Timer
 	Timer timer;
 	std::vector<Timer> timers; // Timer para gestionar la desconexion de cada uno de los clientes. 
+	std::vector<Timer> timersCritic; // Timers de los paquetes criticos
 	int initialTime = 10;
 	int pings = 2;
 	int pingCounter = -1;
 	int expected_fps = 30;
 	double expected_frametime = 1.0 / expected_fps;
-	int packetLostProb = 1;
 
-	bool hasHello = false;
-	std::vector<Timer> timersCritic;
+	int GetClosestClient(unsigned short remotePort); // Devuelve la posicion del cliente en el vector con la primera letra del nombre mas cercana al del usuario local.
+	Client GetClientFromName(std::string name); // Devuelve el cliente que se esta buscando. 
+	void Send(Client* con, sf::UdpSocket* sock, std::string message); // Envia mensajes no criticos al cliente. 
+	void CriticalSend(Client* con, sf::UdpSocket* sock, std::string message, int packetID); // Envia mensajes criticos al cliente.
+	void CriticalReceive(sf::UdpSocket* socket, sf::Packet* inPacket, unsigned short* remotePort, sf::IpAddress* remoteIp, std::string* action, std::string* content, int* packetID); // Recibe los mensajes del cliente tanto criticos como no criticos.
+	void Hello(Client* con, sf::UdpSocket* sock); // Gestion del proceso de conexion con el cliente.
+	void RTTChanger();// Cambiar la probabilidad de perdida de mensaje.
+	void RTTCalculation();// Calcula el RTT de los ultimos 10 mensajes y lo imprime cada 2 segundos. 
+	void PacketChecker(); // Revisa que paquetes estan todavia por confirmar en la tabla de paquetes criticos
+	void SavePacketContent(int pId, std::string action, std::string cName); // Guarda el contenido de los paquetes recibidos.
+	void PingPong(); // Proceso de desconexion por ping pong
+	void ShutdownServer(std::string* mssg, bool* exit); // Proceso de apagado del Servidor
 	
 public:
-	std::vector<Client> clients;
-	std::vector<Client> NoConnectedClients;
-
-	int clientID;
-
-	void ShutdownServer(std::string* mssg, bool* exit);
-	void Hello(Client* con, sf::UdpSocket* sock);
-	void StartServer();
-	void Send(Client* con, sf::UdpSocket* sock, std::string message);
-	void PingPong();
-	void PacketChecker();
-
+	void StartServer(); // Bucle principal del servidor. 
 };

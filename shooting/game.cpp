@@ -91,8 +91,7 @@ void Game::ChallengeSetUp()
 
 void Game::updateGame()
 {
-	//ClientSetUp();
-	if (window.pollEvent(event))
+	if (window.pollEvent(event) || startMenu)
 	{
 		switch (event.type)
 		{
@@ -140,7 +139,7 @@ void Game::updateGame()
 					else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
 						cDir.x = 1;
 					bullets.push_back(Bullet(character.GetPos(), cDir));
-					bullets.push_back(Bullet(character2.GetPos(), cDir));
+					bullets2.push_back(Bullet(character2.GetPos(), cDir));
 				}
 				break;
 			}
@@ -152,8 +151,6 @@ void Game::updateGame()
 				else if (event.key.code == sf::Keyboard::Return && input.getSize() > 0) {
 					if (!challenge && !chooseSetUp) {
 						challenge = true;
-
-						//Servidor deberia pasar el challenge al cliente
 						name = nameText.getString();
 						ChallengeSetUp();
 					}
@@ -161,17 +158,14 @@ void Game::updateGame()
 						chooseGame = true;
 						challenge = false;
 						chooseSetUp = true;
-						ChooseGameSetUp();
-						//enviar al servidor que el challenge es correcto para escoger la partida
-						// TODO: Send challenge from server 
 					}
 					else if (challenge) {
 						ChallengeSetUp();
 					}
 
-					if (chooseSetUp && nameText.getString() == "1")
+					if (chooseSetUp && nameText.getString() == "1") // Si pulsa 1 sera para unirse a un juego
 					{
-						if (!isFirstGame)
+						if (!isFirstGame) // Si hay un juego creado lo une 
 						{
 							//Join Game
 							joined = true;
@@ -179,7 +173,7 @@ void Game::updateGame()
 							playing = true;
 							chooseSetUp = false;
 						}
-						else
+						else // Sino lo crea 
 						{
 							//Create Game
 							created = true;
@@ -190,16 +184,15 @@ void Game::updateGame()
 						}
 					}
 
-					if (chooseSetUp && nameText.getString() == "2")
+					if (chooseSetUp && nameText.getString() == "2") // Si pulsa 2 sera para crear un juego
 					{
 						//Create Game
 						created = true;
 						playing = true;
 						chooseSetUp = false;
-						isP1 = true;
+						isP1 = true; // Lo pone como primer jugador
 					}
-
-					if (chooseSetUp && (!joined && !created)) {
+					if (chooseSetUp && (!joined && !created) && startMenu) {
 						ChooseGameSetUp();
 					}
 				}
@@ -207,6 +200,7 @@ void Game::updateGame()
 			}
 		}
 	}
+	
 	window.clear();
 	window.draw(sprite);
 
@@ -225,7 +219,7 @@ void Game::updateGame()
 		window.draw(nameText);
 		window.draw(text);
 	}
-	if (chooseSetUp) {
+	if (chooseSetUp && startMenu) {
 		// When no playing
 		window.draw(nameRectangle);
 		nameText.setString(input);
@@ -254,7 +248,7 @@ void Game::updateGame()
 		while (it2 != bullets.end()) {
 
 			if (character2.CheckShoot(*it2)) {
-				it2 = bullets.erase(it2);
+				it2 = bullets2.erase(it2);
 				continue;
 			}
 			// If out-of-bounds, the bullet is erased from the list

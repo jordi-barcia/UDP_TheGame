@@ -17,8 +17,8 @@ int main()
 		Servidor s;
 		s.StartServer();
 	}
-	else if (mode == 2){
-		Cliente c; // Cliente c = new Cliente(..., ..., ...) 
+	else if (mode == 2){ // CLIENT
+		Cliente c; 
 		c.ClientMain();
 	}
 }

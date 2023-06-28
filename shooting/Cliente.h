@@ -14,48 +14,49 @@
 
 class Cliente
 {
-	//Client
-	std::string action, content;
+	//Timers
 	Timer timer;
 	std::vector<Timer> timersCritic;
-	bool check = false;
-	bool noGame = false;
-	int packetCounter = 0;
+	
+	//Game
+	Game gc;
 
+	//Packet Variables
 	struct Packet {
 		int packetID;
 		std::string action;
 		std::string clientName;
 	};
-
+	Packet pack;
+	std::string action, content;
+	std::vector<Packet> packets; // Tabla de paquetes criticos.
+	int packIDreceived = -1;
+	int packetCounter = 0;
+	
+	//Server Variables
 	unsigned short serverPort = 5000;
 	sf::IpAddress serverIp = "127.0.0.1";
-
-	Game gc;
+	
+	//Client Variables
 	std::string name;
 	sf::IpAddress ip;
 	unsigned short port = 5000;
 	int clientID = -1;
-
-	Packet pack;
-	std::vector<Packet> packets;
-	int packIDreceived = -1;
 	bool hasHello = false;
-	
-	void SavePacketContent(int pId, std::string action, std::string cName);
-	void SendCritPacket(sf::UdpSocket* sock, std::string actionMssg, std::string contentMssg, int packetID);
-	void PacketChecker(sf::UdpSocket* sock);
+
+	//Functions
+	void SavePacketContent(int pId, std::string action, std::string cName); // Guarda el contenido del paquete critico en la tabla de paquetes.
+	void SendCritPacket(sf::UdpSocket* sock, std::string actionMssg, std::string contentMssg, int packetID); // Envia paquetes criticos al servidor.
+	void PacketChecker(sf::UdpSocket* sock); // Revisa que paquetes faltan por confirmar.
+	void HelloClient(sf::UdpSocket* sock, sf::Packet* inPacket); // Proceso de conexion con el servidor.
+	void SendPacket(sf::UdpSocket* sock, std::string actionMssg, std::string contentMssg); // Envia paquetes no criticos al servidor.
+	void GameSelected(sf::UdpSocket* sock); // Deriva al jugador enviar o CREATED o JOINED al Servidor en funcion de que modo a escogido e
+	void ReceiveCriticalPacket(sf::UdpSocket* sock, std::string* actionMssg, std::string* contentMssg, int* packetID); // Recibe los paquetes del servidor tanto criticos como no criticos
 
 public:
+	//Constructor
 	Cliente() = default;
+	void ClientMain(); // Bucle principal del Cliente
 
-	void HelloClient(sf::UdpSocket* sock, sf::Packet* inPacket);
-	void SendPacket(sf::UdpSocket* sock, std::string actionMssg, std::string contentMssg);
-	void ClientMain();
-	void GameSelected(sf::UdpSocket* sock);
-	void CreateGame();
-	void JoinGame(std::vector<Game> games);
-	void RecieveMessage(sf::UdpSocket* sock, std::string *actionMssg, std::string *contentMssg);
-	void ReceiveCriticalPacket(sf::UdpSocket* sock, std::string* actionMssg, std::string* contentMssg, int* packetID);
 };
 

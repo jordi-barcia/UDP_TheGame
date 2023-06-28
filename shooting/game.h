@@ -17,9 +17,7 @@ class Game
 	sf::Text text;
 	sf::Text nameText;
 	sf::Font font;
-	sf::Event event;
 	sf::RectangleShape nameRectangle;
-	sf::String input;
 
 	// GAME VARIABLES
 	sf::Vector2f cDir;
@@ -31,10 +29,14 @@ class Game
 
 public:
 	Game();
-	Game& operator=(const Game& other);
+	Game& operator=(const Game& other); // Operador sobrecargado para poder igualar 
 
 	sf::RenderWindow window;
 	std::string name;
+	sf::Event event;
+	sf::String input;
+
+	//Booleans
 	bool playing = false;
 	bool challenge = false;
 	bool shooting = false;
@@ -47,7 +49,9 @@ public:
 	bool isFirstGame = false;
 	bool hasExit = false;
 	bool startPlaying = false;
+	bool startMenu = false;
 
+	//Functions
 	void updateGame();
 	void ClientSetup();
 	void ChallengeSetUp();
