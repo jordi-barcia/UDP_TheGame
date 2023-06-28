@@ -65,6 +65,7 @@ class Servidor
 	int expected_fps = 30;
 	double expected_frametime = 1.0 / expected_fps;
 
+	//Functions
 	int GetClosestClient(unsigned short remotePort); // Devuelve la posicion del cliente en el vector con la primera letra del nombre mas cercana al del usuario local.
 	Client GetClientFromName(std::string name); // Devuelve el cliente que se esta buscando. 
 	void Send(Client* con, sf::UdpSocket* sock, std::string message); // Envia mensajes no criticos al cliente. 

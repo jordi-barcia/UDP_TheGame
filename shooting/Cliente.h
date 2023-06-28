@@ -50,7 +50,7 @@ class Cliente
 	void PacketChecker(sf::UdpSocket* sock); // Revisa que paquetes faltan por confirmar.
 	void HelloClient(sf::UdpSocket* sock, sf::Packet* inPacket); // Proceso de conexion con el servidor.
 	void SendPacket(sf::UdpSocket* sock, std::string actionMssg, std::string contentMssg); // Envia paquetes no criticos al servidor.
-	void GameSelected(sf::UdpSocket* sock); // Deriva al jugador enviar o CREATED o JOINED al Servidor en funcion de que modo a escogido e
+	void GameSelected(sf::UdpSocket* sock); // Deriva al jugador enviar o CREATED o JOINED al Servidor en funcion de que modo ha escogido
 	void ReceiveCriticalPacket(sf::UdpSocket* sock, std::string* actionMssg, std::string* contentMssg, int* packetID); // Recibe los paquetes del servidor tanto criticos como no criticos
 
 public:
