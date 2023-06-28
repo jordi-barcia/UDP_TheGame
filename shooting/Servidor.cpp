@@ -78,7 +78,6 @@ void Servidor::CriticalSend(Client* con, sf::UdpSocket* sock, std::string messag
 	outPacket << message << con->name << packetID;
 	
 	int random = rand() % packetLostProb;
-	std::cout << "Random Prob send: " << random << std::endl;
 	if (random == 0)
 	{
 		sock->send(outPacket, con->ip, con->port);
@@ -242,23 +241,28 @@ void Servidor::PacketChecker() {
 							if (clients[j].name == packets[i].clientName)
 							{
 								//std::cout << IDpack << "." << packets[i].packetID << std::endl;
-								if (packIDreceived == packets[i].packetID)
-								{
-									std::cout << "Erased Packet: " << packets[i].action << std::endl;
-									
-									rttContainer.insert(rttContainer.begin(), rttxPacket);
-									rttxPacket = 0.0f;
-
-									packets.erase(packets.begin() + i);
-									timersCritic.erase(timersCritic.begin() + i);
-								}
-								else if (timersCritic[i].temp <= 0) {
-									if (action == "CREATE" || action == "JOINED") {
+								if (action == "CREATE" || action == "JOINED") {
+									if (timersCritic[i].temp <= 0) {
 										CriticalSend(&con, &socket, packets[i].action, pack.packetID);
+										timersCritic[i].init(0.5f);
 										std::this_thread::sleep_for(std::chrono::milliseconds(500));
+										//action = "";
 									}
-									timersCritic[i].init(0.5f);
 								}
+								else 
+								{
+									if (packIDreceived == packets[i].packetID) {
+										std::cout << "Erased Packet: " << packets[i].action << std::endl;
+
+										rttxPacket += expected_frametime;
+										rttContainer.insert(rttContainer.begin(), rttxPacket);
+										rttxPacket = 0.0f;
+
+										packets.erase(packets.begin() + i);
+										timersCritic.erase(timersCritic.begin() + i);
+									}
+								}
+								
 							}
 						}
 					}
@@ -283,7 +287,8 @@ void Servidor::PacketChecker() {
 								if (packIDreceived == packets[i].packetID)
 								{
 									std::cout << "Erased Packet: " << packets[i].action << std::endl;
-								
+
+									rttxPacket += expected_frametime;
 									rttContainer.insert(rttContainer.begin(), rttxPacket);
 									rttxPacket = 0.0f;
 
@@ -415,7 +420,7 @@ void Servidor::StartServer()
 				hasHello = false;
 				//EMPEZAR PROCESO DE PING PONG
 			}
-			else if (action == "CREATE") {
+			else if (action == "CREATE" && !selectGame) {
 				std::cout << "creating game..." << std::endl;
 				for (int j = 0; j < clients.size(); j++)
 				{
@@ -427,13 +432,14 @@ void Servidor::StartServer()
 						nextGameId++;
 						std::cout << "Numero de Games creados: " << games.size() << std::endl;
 						IDpack = 2;
-						SavePacketContent(IDpack, "CREATE_ACK", con.name);
+						SavePacketContent(3, "CREATE_ACK", clients[j].name);
 						CriticalSend(&con, &socket, "CREATE_ACK", IDpack);
 					}
 				}
 				inPacket.clear();
+				selectGame = true;
 			}
-			else if (action == "JOINED") {
+			else if (action == "JOINED" && !selectGame) {
 				std::cout << "joining game..." << std::endl;
 				if (games.size() % 2 == 0 || games.size() == 0)
 				{
@@ -446,10 +452,11 @@ void Servidor::StartServer()
 					clientToGames[con.name] = gameId; // Content = client.name(El que pide el join)
 					Client ClientName = GetClientFromName(con.name);
 					IDpack = 2;
-					SavePacketContent(IDpack, "JOIN_ACK", con.name);
+					SavePacketContent(3, "JOIN_ACK", con.name);
 					CriticalSend(&ClientName, &socket, "JOIN_ACK", IDpack);
 				}
 				inPacket.clear();
+				selectGame = true;
 			}
 			else if (action == "EXIT_CL")
 			{

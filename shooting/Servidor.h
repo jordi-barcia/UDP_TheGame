@@ -37,6 +37,7 @@ class Servidor
 	std::string action, content;
 	int IDpack;
 	int packIDreceived = -1;
+	bool selectGame = false;
 	double rttxPacket = 0.0f;
 	std::vector<double> rttContainer;
 	Packet pack;

@@ -19,7 +19,7 @@ void Cliente::HelloClient(sf::UdpSocket* sock, sf::Packet* inPacket)
 	{
 		//packetCounter++;
 		SavePacketContent(packetCounter, "CH_ACK", gc.name);
-		SendCritPacket(sock, "CH_ACK", gc.name, packetCounter);
+		SendCritPacket(sock, "CH_ACK", gc.name, 1);
 		action = "";
 	}
 	else if (!hasHello) // Programar reenvio de paquete HELLO
@@ -117,6 +117,7 @@ void Cliente::ClientMain()
 			}
 			else if (!hasHello) {
 				HelloClient(&socket, &inPacket);
+				hasHello = true;
 			}
 		}
 
@@ -138,11 +139,14 @@ void Cliente::ClientMain()
 
 		if (action == "NO_GAME") //Para que el cliente le envie CREATE al server en el caso de que no haya games creados
 		{
+			content = gc.name;
 			gc.isFirstGame = true;
 			std::this_thread::sleep_for(std::chrono::milliseconds(100));
 			packetCounter = 2;
-			SavePacketContent(packetCounter, "CREATE", gc.name);
+			SavePacketContent(3, "CREATE", gc.name);
 			SendCritPacket(&socket, "CREATE", content, packetCounter);
+			packetCounter = 3;
+			gc.created = false;
 			action = "";
 		}
 
@@ -160,6 +164,10 @@ void Cliente::ClientMain()
 			SendPacket(&socket, "PONG", gc.name);
 			action = "";
 		}
+
+		if (action == "CREATE_ACK" || action == "JOIN_ACK") {
+			gc.startPlaying = true;
+		}
 	}
 	// When the application loop is broken, we have to release resources
 }
@@ -172,16 +180,18 @@ void Cliente::GameSelected(sf::UdpSocket* sock)
 	if (gc.created) {
 		content = gc.name;
 		packetCounter = 2;
-		SavePacketContent(packetCounter, "CREATE", gc.name);
+		SavePacketContent(3, "CREATE", gc.name);
 		SendCritPacket(sock, "CREATE", content, packetCounter);
 		gc.created = false;
+		packetCounter = 3;
 	}
 	else if (gc.joined) {
 		content = gc.name;
 		packetCounter = 2;
-		SavePacketContent(packetCounter, "JOINED", gc.name);
+		SavePacketContent(3, "JOINED", gc.name);
 		SendCritPacket(sock, "JOINED", content, packetCounter);
 		gc.joined = false;
+		packetCounter = 3;
 	}
 }
 
@@ -206,7 +216,6 @@ void Cliente::PacketChecker(sf::UdpSocket* sock)
 					else if (timersCritic[i].temp <= 0) {
 						if (action != "PING")
 						{
-							std::cout << "REENVIO" << std::endl;
 							SendCritPacket(sock, packets[i].action, gc.name, packetCounter);
 							std::this_thread::sleep_for(std::chrono::milliseconds(500));
 						}

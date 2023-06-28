@@ -232,7 +232,7 @@ void Game::updateGame()
 		window.draw(nameText);
 		window.draw(text);
 	}
-	if (playing)
+	if (playing && startPlaying)
 	{
 		if (isFirstGame)
 		{

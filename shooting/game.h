@@ -46,6 +46,7 @@ public:
 	bool isP1 = false;
 	bool isFirstGame = false;
 	bool hasExit = false;
+	bool startPlaying = false;
 
 	void updateGame();
 	void ClientSetup();
