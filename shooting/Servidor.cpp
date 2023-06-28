@@ -189,19 +189,6 @@ void Servidor::CriticalReceive(sf::UdpSocket* socket, sf::Packet* inPacket, unsi
 	}
 }
 
-//void Receive(sf::UdpSocket* socket, sf::Packet* inPacket, unsigned short* remotePort, sf::IpAddress* remoteIp, std::string* action, std::string* content)
-//{
-//	while (true)
-//	{
-//		if (socket->receive(*inPacket, *remoteIp, *remotePort) != socket->Done)
-//		{
-//			std::cout << "Receive Error: " << socket->Error << std::endl;
-//		}
-//		*inPacket >> *action >> *content;
-//		std::this_thread::sleep_for(std::chrono::milliseconds(100));
-//	}
-//}
-
 void Servidor::RTTCalculation() 
 {
 	while (true)
@@ -323,24 +310,6 @@ void Servidor::SavePacketContent(int pId, std::string action, std::string cName)
 	timersCritic.push_back(timer);
 }
 
-//void Servidor::Ping(std::atomic_bool* stopThread)
-//{
-//    std::cout << "Ping Thread ID: " << std::this_thread::get_id() << std::endl;
-//    auto startTime = std::chrono::steady_clock::now();
-//    auto duration = std::chrono::steady_clock::now() - startTime;
-//    while (std::chrono::duration_cast<std::chrono::milliseconds>(duration).count() < 10000)
-//    {
-//        duration = std::chrono::steady_clock::now() - startTime;
-//        std::cout << "Ping Duration: " << std::chrono::duration_cast<std::chrono::milliseconds>(duration).count() << std::endl;
-//        if (stopThread)
-//        {
-//            return;
-//        }
-//    }
-//
-//    std::cout << "Ping Duration Out Bucle: " << std::chrono::duration_cast<std::chrono::milliseconds>(duration).count() << std::endl;
-//    Send(&con, &socket, "PING");
-//}
 
 std::thread timer;
 
@@ -362,20 +331,12 @@ void Servidor::StartServer()
 	// Application loop
 	sf::IpAddress remoteIP;
 	unsigned short remotePort = 0;
-	
-	//Time
-	//auto startTime = std::chrono::steady_clock::now();
-	//auto duration = std::chrono::steady_clock::now() - startTime;
-	//int pingCounter = -1;
 
 	//Threads
 	std::atomic_bool stopThreadTimer;
 	
 	std::thread read_console_t(&Servidor::ShutdownServer, this, &sendMessage, &exit);
 	read_console_t.detach();
-	
-	/*std::thread receiveFromClients(Receive, &socket, &inPacket, &remotePort, &remoteIP, &action, &content);
-	receiveFromClients.detach();*/
 	
 	std::thread criticalReceiveFromClients(&Servidor::CriticalReceive, this, &socket, &inPacket, &remotePort, &remoteIP, &action, &content, &IDpack);
 	criticalReceiveFromClients.detach();

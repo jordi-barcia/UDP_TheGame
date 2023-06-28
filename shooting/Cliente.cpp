@@ -96,10 +96,6 @@ void Cliente::ClientMain()
 	sf::IpAddress serverIP = "127.0.0.1";
 	unsigned short serverPort = 5000;
 
-	//Threads
-	/*std::thread receive(&Cliente::RecieveMessage, this, &socket, &action, &content);
-	receive.detach();*/
-
 	std::thread criticalReceive(&Cliente::ReceiveCriticalPacket, this, &socket, &action, &content, &packetCounter);
 	criticalReceive.detach();
 
@@ -229,18 +225,6 @@ void Cliente::PacketChecker(sf::UdpSocket* sock)
 		}
 	}
 }
-
-/*void Cliente::RecieveMessage(sf::UdpSocket* sock, std::string* actionMssg, std::string* contentMssg)
-{
-	while (true)
-	{
-		sf::Packet inPacket;
-		sock->receive(inPacket, serverIp, serverPort);
-		inPacket >> *actionMssg >> *contentMssg;
-		std::cout << "Receive: " + *actionMssg << " " + *contentMssg << std::endl;
-		std::this_thread::sleep_for(std::chrono::milliseconds(100));
-	}
-}*/
 
 
 
