@@ -97,18 +97,17 @@ void Servidor::PingPong()
 				//mtx.lock();
 				if (pingCounter == -1)
 				{
-					std::cout << "entro PING" << std::endl;
 					Send(&clients[i], &socket, "PING");
 					pingCounter++;
 					timers[i].init(2);
 				}
-				else if (pingCounter <= 4 && pingCounter >= 0)
+				else if (pingCounter < 4 && pingCounter >= 0)
 				{
 					Send(&clients[i], &socket, "PING");
 					pingCounter++;
 					timers[i].init(2);
 				}
-				else if (pingCounter >= 4)
+				else if (pingCounter > 4)
 				{
 					action == "EXIT_CL";
 				}
@@ -164,7 +163,6 @@ void Servidor::Hello(Client* con, sf::UdpSocket* sock)
 
 		timer.init(initialTime);
 		timers.push_back(timer);
-		std::cout << timers.size() << std::endl;
 		action = "";
 		hasHello = false;
 	}
@@ -399,15 +397,9 @@ void Servidor::StartServer()
 		//Paquete << Accion << Contenido
 		if (inPacket.getDataSize() > 0)
 		{
-			//std::cout << "Data size: " << inPacket.getDataSize() << std::endl;
-			//std::cout << "Receive: " << action << " " << content << " " << remotePort << std::endl;
-			
-			
-			//startTime = std::chrono::steady_clock::now();
-			//std::cout << action << " " << content << " " << remotePort << std::endl;
-			
 			if (action == "HELLO" && !hasHello)
 			{
+				std::this_thread::sleep_for(std::chrono::milliseconds(50));
 				//Saving client config
 				con.name = content;
 				con.port = remotePort;
@@ -483,7 +475,7 @@ void Servidor::StartServer()
 				}
 			}
 
-			else if (action == "PONG")
+			if (action == "PONG")
 			{
 				for (int i = 0; i < clients.size(); i++)
 				{
@@ -491,37 +483,16 @@ void Servidor::StartServer()
 					{
 						timers[i].init(initialTime);
 						pingCounter = -1;
-						content = "";
+						action = "";
 					}
 				}
 			}
 
-			else if (action == "MOV")
+			if (action == "MOV")
 			{
 				//Validar movimiento
 				//Comunicar a los otros clientes el movimiento del jugador
 			}
-		}
-		else
-		{
-			//std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(duration).count() << std::endl;
-			//duration = std::chrono::steady_clock::now() - startTime;
-			//if (std::chrono::duration_cast<std::chrono::milliseconds>(duration).count() >= 10000)
-			//{
-			//	Send(&con, &socket, "PING");
-			//	startTime = std::chrono::steady_clock::now();
-			//	pingCounter++;
-			//}
-			//else if (std::chrono::duration_cast<std::chrono::milliseconds>(duration).count() >= 2000 && pingCounter <= 4 && pingCounter >= 0)
-			//{
-			//	Send(&con, &socket, "PING");
-			//	startTime = std::chrono::steady_clock::now();
-			//	pingCounter++;
-			//}
-			//else if (std::chrono::duration_cast<std::chrono::milliseconds>(duration).count() >= 10000 && pingCounter >= 4)
-			//{
-			//	action == "EXIT_CL";
-			//}
 		}
 		PingPong();
 	}
