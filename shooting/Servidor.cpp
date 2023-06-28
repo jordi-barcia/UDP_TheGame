@@ -431,8 +431,8 @@ void Servidor::StartServer()
 						clientToGames[clients[j].name] = nextGameId;
 						nextGameId++;
 						std::cout << "Numero de Games creados: " << games.size() << std::endl;
-						IDpack = 2;
-						SavePacketContent(3, "CREATE_ACK", clients[j].name);
+						IDpack = 3;
+						SavePacketContent(IDpack, "CREATE_ACK", clients[j].name);
 						CriticalSend(&con, &socket, "CREATE_ACK", IDpack);
 					}
 				}
@@ -451,8 +451,8 @@ void Servidor::StartServer()
 					int gameId = clientToGames[clients[indexClosestClient].name];
 					clientToGames[con.name] = gameId; // Content = client.name(El que pide el join)
 					Client ClientName = GetClientFromName(con.name);
-					IDpack = 2;
-					SavePacketContent(3, "JOIN_ACK", con.name);
+					IDpack = 3;
+					SavePacketContent(IDpack, "JOIN_ACK", con.name);
 					CriticalSend(&ClientName, &socket, "JOIN_ACK", IDpack);
 				}
 				inPacket.clear();

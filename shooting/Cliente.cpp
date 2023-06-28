@@ -141,6 +141,8 @@ void Cliente::ClientMain()
 		{
 			content = gc.name;
 			gc.isFirstGame = true;
+			packets.erase(packets.begin());
+			timersCritic.erase(timersCritic.begin());
 			std::this_thread::sleep_for(std::chrono::milliseconds(100));
 			packetCounter = 2;
 			SavePacketContent(3, "CREATE", gc.name);
