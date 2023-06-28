@@ -82,6 +82,7 @@ void Servidor::CriticalSend(Client* con, sf::UdpSocket* sock, std::string messag
 	{
 		sock->send(outPacket, con->ip, con->port);
 		std::cout << "Critical Sending: " << message << " " << con->name << " " << packetID << std::endl;
+		check = "SENDED";
 	}
 	//SavePacketContent(packetID, message, con->name);
 	std::this_thread::sleep_for(std::chrono::milliseconds(10));
@@ -249,7 +250,7 @@ void Servidor::PacketChecker() {
 										//action = "";
 									}
 								}
-								else 
+								if(check == "SENDED")
 								{
 									if (packIDreceived == packets[i].packetID) {
 										std::cout << "Erased Packet: " << packets[i].action << std::endl;
@@ -260,6 +261,9 @@ void Servidor::PacketChecker() {
 
 										packets.erase(packets.begin() + i);
 										timersCritic.erase(timersCritic.begin() + i);
+										check = "";
+										action = "";
+										selectGame = false;
 									}
 								}
 								
@@ -454,9 +458,9 @@ void Servidor::StartServer()
 					IDpack = 3;
 					SavePacketContent(IDpack, "JOIN_ACK", con.name);
 					CriticalSend(&ClientName, &socket, "JOIN_ACK", IDpack);
+					selectGame = true;
 				}
 				inPacket.clear();
-				selectGame = true;
 			}
 			else if (action == "EXIT_CL")
 			{

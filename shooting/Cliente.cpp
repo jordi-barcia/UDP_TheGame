@@ -143,13 +143,14 @@ void Cliente::ClientMain()
 			gc.isFirstGame = true;
 			packets.erase(packets.begin());
 			timersCritic.erase(timersCritic.begin());
-			std::this_thread::sleep_for(std::chrono::milliseconds(100));
+			//std::this_thread::sleep_for(std::chrono::milliseconds(100));
 			packetCounter = 2;
+			packIDreceived = -1;
 			SavePacketContent(3, "CREATE", gc.name);
 			SendCritPacket(&socket, "CREATE", content, packetCounter);
-			packetCounter = 3;
 			gc.created = false;
 			action = "";
+			packetCounter = 3;
 		}
 
 		gc.updateGame();

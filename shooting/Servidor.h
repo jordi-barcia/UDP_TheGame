@@ -34,7 +34,7 @@ class Servidor
 		std::string clientName;
 	};
 
-	std::string action, content;
+	std::string action, content, check;
 	int IDpack;
 	int packIDreceived = -1;
 	bool selectGame = false;
